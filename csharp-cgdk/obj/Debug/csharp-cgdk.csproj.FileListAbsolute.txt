@@ -1,0 +1,8 @@
+D:\repositories\csharp-cgdk\bin\Debug\csharp-cgdk.exe.config
+D:\repositories\csharp-cgdk\bin\Debug\csharp-cgdk.exe
+D:\repositories\csharp-cgdk\bin\Debug\csharp-cgdk.pdb
+D:\repositories\csharp-cgdk\obj\Debug\csharp-cgdk.csprojResolveAssemblyReference.cache
+D:\repositories\csharp-cgdk\obj\Debug\csharp-cgdk.exe
+D:\repositories\csharp-cgdk\obj\Debug\csharp-cgdk.pdb
+D:\repositories\csharp-cgdk\bin\Debug\OpenTK.dll
+D:\repositories\csharp-cgdk\bin\Debug\OpenTK.xml
