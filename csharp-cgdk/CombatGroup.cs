@@ -7,17 +7,38 @@ using System.Linq;
 namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
     public abstract class CombatGroup {
         protected Commander Commander { get; }
-        public abstract VehicleType GroupType { get;}
+        public abstract VehicleType GroupType { get; }
         public Vector Position { get; internal set; }
-
+        public bool IsAlive { get; private set; }
+        public Vector Goal { get; internal set; }
+        public Dictionary<IntVector, double> Potentials { get; private set; } = new Dictionary<IntVector, double>();
         public CombatGroup (Commander commander) {
             this.Commander = commander;
         }
 
-        public virtual void Step (int tick) {
+        public virtual void Step (Dictionary<long, ActualUnit> enemies) {
+            Potentials = new Dictionary<IntVector, double>();
 
+            for (int i = (int)Position.X - 100; i <= (int)Position.X + 100; i += 50)
+                for (int j = (int)Position.X - 100; j <= (int)Position.X + 100; j += 50) {
+
+                    if (i < 1 || j < 1 || i > 1022 || j > 1022)
+                        continue;
+
+                    double eValue = 0;
+
+                    foreach (var u in enemies.Values.Where(u => u.Durability > 0)) {
+                        eValue += GetUnitValue(u, i,j);
+                    }
+
+                    Potentials[new IntVector(i,j)] = eValue;
+                }
+            var best = Potentials.OrderBy(p => p.Value).First().Key;
+
+            Commander.Move(best.X, best.Y);
         }
 
+        public abstract double GetUnitValue (ActualUnit u, int i, int j);
 
         internal void Update (List<ActualUnit> unitList) {
             double x = 0;
@@ -33,7 +54,8 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                 }
             });
 
-            Position = new Vector(x / count, y / count);  
+            IsAlive = count > 0;
+            Position = new Vector(x / count, y / count);
         }
     }
 
@@ -49,24 +71,37 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             }
         }
 
-        public override void Step (int tick) {
-            if (tick == 1) {
-                Commander.Select(VehicleType.Helicopter);
-                Commander.Assign((int)CombatGroupId.Helicopters);
+
+
+        public override double GetUnitValue(ActualUnit unit,int i,int j ) {
+
+
+            if (unit.Durability == 0)
+                return 0;
+
+            //if (unit.IsMy) {
+            //    if (unit.UnitType == VehicleType.Fighter)
+            //        return -0.3f;
+            //    return 0;
+            //}
+
+            var dist = unit.Position.SquareDistanceTo(i, j);
+
+            var value =  GetValueByType(unit);
+
+
+            return dist*value /100000f;
+        }
+
+        private static double GetValueByType (ActualUnit unit) {
+            switch (unit.UnitType) {
+                case VehicleType.Arrv: return 0.001f;
+                case VehicleType.Fighter: return -0.1f;
+                case VehicleType.Helicopter: return -0.1f;
+                case VehicleType.Ifv: return -0.1f;
+                case VehicleType.Tank: return 0.02f;
+                default: return 0;
             }
-
-            if (tick > 5 && tick % 50 == 0) {
-                var alpha = rnd.NextDouble()* Math.PI * 2;
-
-                var x = 500 * Math.Cos(alpha);
-                var y = 500 * Math.Sin(alpha);
-                //              x = r × cos(θ)
-                //y = r × sin(θ)
-                Commander.Move(x,y);
-            }
-            
-
-            base.Step(tick);
         }
     }
 

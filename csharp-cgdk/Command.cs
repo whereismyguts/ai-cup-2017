@@ -19,14 +19,15 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             commands.Add(new SelectCommand(unitType));
         }
 
-        internal void Update (World world, Move move) {
+        internal void Update (World world, Move move, Player me) {
             this.move = move;
             this.world = world;
+            this.me = me;
         }
 
         public void Step () {
-            if (world.TickIndex >= lastActionTick + 10) {
-                // insert making desision about actions here
+            if (me.RemainingActionCooldownTicks ==0) {
+                
                 ExecuteNextCommand();
                 lastActionTick = world.TickIndex;
             }
@@ -47,8 +48,11 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         double lastMoveX = -10;
         double lastMoveY = -10;
         internal void Move (double x, double y) {
-            if (lastMoveX == x && lastMoveY == y)
-                return;
+
+            commands.RemoveAll(c => c is MoveCommand);
+
+            //if (lastMoveX == x && lastMoveY == y)
+            //    return;
            // commands.Add(erase);
             commands.Add(new MoveCommand(x, y));
             lastMoveX = x;
@@ -56,6 +60,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         }
 
         EraseCommand erase = new EraseCommand();
+        private Player me;
     }
 
 

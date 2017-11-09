@@ -9,9 +9,15 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
         public static void Main(string[] args) {
 
-         //   System.Diagnostics.Process.Start(@"..\..\..\localrunner\local-runner.bat");
+            //   System.Diagnostics.Process.Start(@"..\..\..\localrunner\local-runner.bat");
 
-            new Runner(args.Length == 3 ? args : new[] {"127.0.0.1", "31001", "0000000000000000"}).Run();
+            
+            try {
+                new Runner(args.Length == 3 ? args : new[] { "127.0.0.1", "31001", "0000000000000000" }).Run();
+            }
+            catch  {
+                Render.Run();
+            }
         }
 
         private Runner(IReadOnlyList<string> args) {

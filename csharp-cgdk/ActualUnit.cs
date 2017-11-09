@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
-    class ActualUnit {
+    public class ActualUnit {
         public VehicleType UnitType { get; }
         public int Durability { get; set; }
         public int[] Groups { get; set; }
@@ -32,6 +32,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             VisionRange = newVehicle.VisionRange;
             AerialAtackRange = newVehicle.AerialAttackRange;
             GroundAttackRange = newVehicle.GroundAttackRange;
+            IsMy = newVehicle.PlayerId == 1;
         }
 
         internal void Update (VehicleUpdate update) {

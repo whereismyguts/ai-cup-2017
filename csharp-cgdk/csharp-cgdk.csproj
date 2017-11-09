@@ -58,8 +58,8 @@
     <StartupObject>Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk.Runner</StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="OpenTK, Version=2.0.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
-      <HintPath>packages\OpenTK.2.0.0\lib\net20\OpenTK.dll</HintPath>
+    <Reference Include="MonoGame.Framework, Version=3.6.0.1625, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\MonoGame.Framework.WindowsDX.3.6.0.1625\lib\net40\MonoGame.Framework.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -80,6 +80,7 @@
     <Compile Include="ActualUnit.cs" />
     <Compile Include="CombatGroup.cs" />
     <Compile Include="Command.cs" />
+    <Compile Include="Dictionary.cs" />
     <Compile Include="Model\ActionType.cs" />
     <Compile Include="Model\CircularUnit.cs" />
     <Compile Include="Model\Facility.cs" />
@@ -127,6 +128,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="MonoGame.Framework.dll.config" />
     <None Include="OpenTK.dll.config" />
     <None Include="packages.config" />
   </ItemGroup>
