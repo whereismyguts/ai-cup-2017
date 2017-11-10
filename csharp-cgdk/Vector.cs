@@ -31,5 +31,9 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             var dy = Y - y;
             return dx * dx + dy * dy;
         }
+
+        public override string ToString () {
+            return "["+X + "; " + Y + ";]";
+        }
     }
 }

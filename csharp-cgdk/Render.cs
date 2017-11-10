@@ -28,6 +28,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             window.Enemies = enemies;
             
             window.Helics = helics;
+            window.CustomUpdate();
         }
     }
 
@@ -38,9 +39,9 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         float cellWidth;
         public MonoRenderer () {
             graphics = new GraphicsDeviceManager(this);
-            graphics.PreferredBackBufferWidth = 420;
-            graphics.PreferredBackBufferHeight = 420;
-            cellWidth =MyStrategy.CellWidth/1024f * graphics.PreferredBackBufferWidth;
+            graphics.PreferredBackBufferWidth = 512;
+            graphics.PreferredBackBufferHeight = 512;
+            cellWidth = graphics.PreferredBackBufferWidth / 1024f * MyStrategy.CellWidth;
         }
 
         public Dictionary<long, ActualUnit> Enemies { get; internal set; }
@@ -62,37 +63,46 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
         
         Color gridColor = new Color(Color.Black, 2.5f);
+
+        public void CustomUpdate () {
+            try {
+
+                GraphicsDevice.Clear(Color.White);
+
+                spriteBatch.Begin(SpriteSortMode.Deferred,
+                  BlendState.AlphaBlend,
+                  SamplerState.PointClamp,
+                  null, null, null, null);
+
+
+
+
+                DrawGrid();
+
+                foreach (var u in Units.Values)
+                    DrawUnit(u);
+                foreach (var u in Enemies.Values)
+                    DrawUnit(u);
+
+                DrawPoint(Helics.Goal, Color.Violet);
+
+                DrawPoint(Helics.Position, Color.Green);
+
+                spriteBatch.End();
+
+                //UpdateInProcess = false;
+            }
+            catch (Exception e) {
+            }
+        }
+
         protected override void Update (GameTime gameTime) {
-            base.Update(gameTime);
-
-            GraphicsDevice.Clear(Color.White);
-
-            spriteBatch.Begin(SpriteSortMode.Deferred,
-              BlendState.AlphaBlend,
-              SamplerState.PointClamp,
-              null, null, null, null);
-
-
-
-
-            DrawGrid();
-
-            foreach (var u in Units.Values)
-                DrawUnit(u);
-            foreach (var u in Enemies.Values)
-                DrawUnit(u);
-
-            DrawPoint(Helics.Goal, Color.Violet);
-
-            DrawPoint(Helics.Position, Color.Green);
-
-            spriteBatch.End();
+         //   base.Update(gameTime);
         }
 
         private void DrawPoint (Vector point, Color color) {
-            
-            var pos = new Vector2((float)point.X / 1024f * graphics.PreferredBackBufferWidth, (float)point.Y / 1024f * graphics.PreferredBackBufferHeight);
-            spriteBatch.Draw(dummyTexture, pos, new Rectangle(0, 0, 2, 2), color);
+            var pos = new Vector2((float)point.X / 1024f * graphics.PreferredBackBufferWidth, (float)point.Y / 1024f * graphics.PreferredBackBufferHeight) - new Vector2(5,5);
+            spriteBatch.Draw(dummyTexture, pos, new Rectangle(0, 0, 10, 10), color);
         }
 
         private void DrawGrid () {

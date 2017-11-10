@@ -20,7 +20,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             Potentials = new Dictionary<IntVector, double>();
 
             for (int i = (int)Position.X - 100; i <= (int)Position.X + 100; i += 50)
-                for (int j = (int)Position.X - 100; j <= (int)Position.X + 100; j += 50) {
+                for (int j = (int)Position.Y - 100; j <= (int)Position.Y + 100; j += 50) {
 
                     if (i < 1 || j < 1 || i > 1022 || j > 1022)
                         continue;
@@ -33,9 +33,9 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
                     Potentials[new IntVector(i,j)] = eValue;
                 }
-            var best = Potentials.OrderBy(p => p.Value).First().Key;
-
-            Commander.Move(best.X, best.Y);
+            var best = Potentials.OrderBy(p => p.Value).Last().Key;
+            Goal = new Vector(best.X, best.Y);
+            Commander.Move(best.X- Position.X , best.Y- Position. Y);
         }
 
         public abstract double GetUnitValue (ActualUnit u, int i, int j);
