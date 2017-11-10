@@ -17,7 +17,14 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
         internal void Select (VehicleType unitType) {
             commands.Add(new SelectCommand(unitType));
+            selectedGroup = -1;
         }
+
+        internal void Select (int id) {
+            commands.Add(new SelectCommand(id));
+            selectedGroup = id;
+        }
+
 
         internal void Update (World world, Move move, Player me) {
             this.move = move;
@@ -45,22 +52,28 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         }
 
 
-        double lastMoveX = -10;
-        double lastMoveY = -10;
-        internal void Move (double x, double y) {
+  
+        internal void Move (double x, double y, int groupId) {
 
-            commands.RemoveAll(c => c is MoveCommand);
+            //    commands.RemoveAll(c => c is MoveCommand);
 
-            //if (lastMoveX == x && lastMoveY == y)
-            //    return;
-           // commands.Add(erase);
+
+            if (x<1 || y< 1/*|| lastMoveX == x && lastMoveY == y*/)
+                return;
+
+            if (selectedGroup != groupId)
+                Select(groupId);
+
             commands.Add(new MoveCommand(x, y));
             lastMoveX = x;
             lastMoveY = y;
         }
 
-        EraseCommand erase = new EraseCommand();
+        
         private Player me;
+        private int selectedGroup;
+        private double lastMoveX;
+        private double lastMoveY;
     }
 
 
@@ -105,14 +118,24 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         VehicleType unitTypeToSelect;
         bool typeMatters = false;
         object rectangle;
+         int group = -1;
 
         public SelectCommand (VehicleType unitType) {
             typeMatters = true;
             this.unitTypeToSelect = unitType;
         }
 
+        public SelectCommand (int id) {
+            this.group = id;
+        }
+
         public override void Execute (Move move) {
             move.Action = ActionType.ClearAndSelect;
+
+            if (group > -1) {
+                move.Group = group;
+            }
+
             if (typeMatters)
                 move.VehicleType = unitTypeToSelect;
             if (rectangle == null) {

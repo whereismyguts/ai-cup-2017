@@ -6,7 +6,8 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             X = x;
             Y = y;
         }
-        
+
+        public IntVector IntVector { get { return new IntVector((int)X, (int)Y); } }
         public double X { get; set; }
         public double Y { get; set; }
 
@@ -14,6 +15,10 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             var dx = X - x;
             var dy =Y - y;
             return dx * dx + dy * dy;
+        }
+
+        internal double DistanceTo (int i, int j) {
+            return Math.Sqrt(SquareDistanceTo(i, j));
         }
     }
 

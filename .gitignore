@@ -1,0 +1,6 @@
+/csharp-cgdk/.vs/csharp-cgdk/v15/Server/sqlite3/db.lock
+/csharp-cgdk/.vs/csharp-cgdk/v15/Server/sqlite3/storage.ide
+/csharp-cgdk/obj/Debug/csharp-cgdk.csproj.CopyComplete
+*.suo
+*.log
+*.txt

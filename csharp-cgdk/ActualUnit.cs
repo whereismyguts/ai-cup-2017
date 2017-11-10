@@ -21,6 +21,15 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         public double AerialAtackRange { get; }
         public double GroundAttackRange { get; }
         public Vector Position { get; internal set; }
+        public double WorkDistance {
+            get {
+                switch (UnitType) {
+                    case VehicleType.Fighter: return 200;
+                    case VehicleType.Helicopter: return 150;
+                    default: return 300;
+                }
+            }
+        }
 
         //public double VisionRange { get; }
 
@@ -33,6 +42,9 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             AerialAtackRange = newVehicle.AerialAttackRange;
             GroundAttackRange = newVehicle.GroundAttackRange;
             IsMy = newVehicle.PlayerId == 1;
+
+
+            
         }
 
         internal void Update (VehicleUpdate update) {

@@ -12,22 +12,20 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
 
 
+
         public static void Run () {
             window = new MonoRenderer();
             window.Run();
-
-            // main.Run();
         }
 
-        
-
-        internal static void Update (Dictionary<long, ActualUnit> enemies, Dictionary<long, ActualUnit> vehicles, CombatGroup helics) {
-            if (window == null)
+        internal static void Update (Dictionary<long, ActualUnit> enemies, Dictionary<long, ActualUnit> vehicles, List<CombatGroup> groups) {
+            if (window == null) 
                 return;
+            
             window.Units = vehicles;
             window.Enemies = enemies;
-            
-            window.Helics = helics;
+
+            window.Groups = groups;
             window.CustomUpdate();
         }
     }
@@ -39,15 +37,15 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         float cellWidth;
         public MonoRenderer () {
             graphics = new GraphicsDeviceManager(this);
-            graphics.PreferredBackBufferWidth = 512;
-            graphics.PreferredBackBufferHeight = 512;
+            graphics.PreferredBackBufferWidth = 300;
+            graphics.PreferredBackBufferHeight = 300;
             cellWidth = graphics.PreferredBackBufferWidth / 1024f * MyStrategy.CellWidth;
         }
 
         public Dictionary<long, ActualUnit> Enemies { get; internal set; }
-       
+
         public Dictionary<long, ActualUnit> Units { get; internal set; }
-        public CombatGroup Helics { get; internal set; }
+        public List<CombatGroup> Groups { get; internal set; }
 
         protected override void Initialize () {
             base.Initialize();
@@ -61,7 +59,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             Units.Add(1, new ActualUnit(new Model.Vehicle(1, 100, 100, 3, 1, 100, 100, 1, 60, 60 * 60, 60, 60 * 60, 60, 60 * 60, 60, 60, 60, 60, 6, 1, Model.VehicleType.Tank, false, false, new int[] { })));
         }
 
-        
+
         Color gridColor = new Color(Color.Black, 2.5f);
 
         public void CustomUpdate () {
@@ -74,19 +72,15 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                   SamplerState.PointClamp,
                   null, null, null, null);
 
+                
 
+                DrawUnits();
 
-
-                DrawGrid();
-
-                foreach (var u in Units.Values)
-                    DrawUnit(u);
-                foreach (var u in Enemies.Values)
-                    DrawUnit(u);
-
-                DrawPoint(Helics.Goal, Color.Violet);
-
-                DrawPoint(Helics.Position, Color.Green);
+                foreach (var group in Groups) {
+                    DrawGrid(group);
+                    DrawPoint(group.Goal, Color.Violet);
+                    DrawPoint(group.Position, Color.Green);
+                }
 
                 spriteBatch.End();
 
@@ -97,43 +91,77 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         }
 
         protected override void Update (GameTime gameTime) {
-         //   base.Update(gameTime);
+            //   base.Update(gameTime);
         }
 
-        private void DrawPoint (Vector point, Color color) {
-            var pos = new Vector2((float)point.X / 1024f * graphics.PreferredBackBufferWidth, (float)point.Y / 1024f * graphics.PreferredBackBufferHeight) - new Vector2(5,5);
-            spriteBatch.Draw(dummyTexture, pos, new Rectangle(0, 0, 10, 10), color);
+        private void DrawPoint (Vector point, Color color, float width = 10) {
+            var pos = VToScreenV2(point);// new Vector2((float)point.X / 1024f * graphics.PreferredBackBufferWidth, (float)point.Y / 1024f * graphics.PreferredBackBufferHeight) - new Vector2(5, 5);
+            DrawPoint(pos, color, width);
         }
 
-        private void DrawGrid () {
+        void DrawPoint (Vector2 point, Color color, float width = 10) {
 
-            if (Helics == null)
+            var pos = point;// ; - new Vector2(width / 2, width / 2);
+
+            Rectangle rect = new Rectangle((int)(pos.X - width / 2), (int)(pos.Y - width / 2), (int)width, (int)width);
+
+            spriteBatch.Draw(
+                dummyTexture,
+                rect,
+                color);
+        }
+
+        void DrawPoint (IntVector point, Color color, float width = 10) {
+            var pos = VToScreenV2(point);
+            DrawPoint(pos, color, width);
+        }
+
+        Vector2 VToScreenV2 (IntVector v) {
+            return new Vector2(
+                v.X / 1024f * graphics.PreferredBackBufferWidth,
+                v.Y / 1024f * graphics.PreferredBackBufferHeight);
+        }
+
+        Vector2 VToScreenV2 (Vector v) {
+            return new Vector2(
+                (float)v.X / 1024f * graphics.PreferredBackBufferWidth,
+                (float)v.Y / 1024f * graphics.PreferredBackBufferHeight);
+        }
+
+        private void DrawGrid (CombatGroup group) {
+
+            if (Groups == null)
                 return;
             double max = float.MinValue;
             double min = float.MaxValue;
 
-            foreach (var cell in Helics.Potentials) {
+            foreach (var cell in group.Potentials) {
                 if (cell.Value > max)
-                        max = cell.Value;
-                    else if (cell.Value < min)
-                        min = cell.Value;
-                }
+                    max = cell.Value;
+                else if (cell.Value < min)
+                    min = cell.Value;
+            }
             double delta = max - min;
 
 
-            foreach (var cell in Helics.Potentials) {
-                var pos3 = new Vector2(cell.Key.X , cell.Key.Y );
+            foreach (var cell in group.Potentials) {
 
                 float c = (float)((cell.Value - min) / delta);
                 gridColor = new Color(1 - c, c, c);
-                spriteBatch.Draw(dummyTexture, pos3, new Rectangle(0, 0, (int)cellWidth, (int)cellWidth), gridColor);
+
+                DrawPoint(cell.Key, gridColor, cellWidth);
+                //spriteBatch.Draw(dummyTexture, pos, new Rectangle(0, 0, (int)cellWidth, (int)cellWidth), gridColor);
             }
         }
 
-        private void DrawUnit (ActualUnit u) {
-            Vector2 pos = new Vector2((float)u.Position.X - 2.5f, (float)u.Position.Y - 2.5f);
-            pos = new Vector2(pos.X / 1024f * graphics.PreferredBackBufferWidth, pos.Y / 1024f * graphics.PreferredBackBufferHeight);
-            spriteBatch.Draw(dummyTexture, pos, new Rectangle(0, 0, 5, 5), u.IsMy? Color.Black : Color.DarkRed);
+        private void DrawUnits () {
+
+            foreach (var u in Units.Values)
+                DrawPoint(u.Position, Color.Black, 5);
+            foreach (var u in Enemies.Values)
+                DrawPoint(u.Position, Color.DarkRed, 5);
+
+            //   spriteBatch.Draw(dummyTexture, pos, new Rectangle(0, 0, 5, 5), u.IsMy ? Color.Black : Color.DarkRed);
         }
     }
 }
