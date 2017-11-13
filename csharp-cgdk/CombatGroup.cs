@@ -30,7 +30,8 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                         continue;
 
                     double eValue = 1;
-                    double dValue = Math.Min(1 - Math.Abs(i - 500) / 500f, 1 - Math.Abs(j - 512) / 512f) / 100f;
+
+                    double dValue = (Math.Min(Math.Abs(i - Position.X) / 1024f, Math.Abs(j - Position.Y) / 1024f) + 1-Math.Min(Math.Abs(i - 512) / 512f, Math.Abs(j - 512) / 512f))/2f;
 
                     foreach (var e in enemies) {
                         var distanceToEnemy = e.Value.Position.DistanceTo(i, j);
@@ -40,7 +41,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                                 eValue = newValue;
                         }
                     }
-                    Potentials[new IntVector(i, j)] = eValue + dValue;
+                    Potentials[new IntVector(i, j)] = eValue + dValue ;
                 }
 
             var best = Potentials.OrderBy(p => p.Value).Last().Key;
@@ -78,7 +79,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
         protected override double GetUnitDanger (ActualUnit value) {
             switch (value.UnitType) {
-                case VehicleType.Fighter: return 1;
+                case VehicleType.Fighter: return -1;
                 case VehicleType.Helicopter: return -1;
                 case VehicleType.Ifv: return 1;
                 case VehicleType.Tank: return 0;

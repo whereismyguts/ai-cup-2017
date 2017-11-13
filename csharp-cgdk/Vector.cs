@@ -20,6 +20,11 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         internal double DistanceTo (int i, int j) {
             return Math.Sqrt(SquareDistanceTo(i, j));
         }
+
+        public override bool Equals (object obj) {
+            var v = (Vector)obj;
+            return v.X == X && v.Y == Y;
+        }
     }
 
     public struct IntVector {

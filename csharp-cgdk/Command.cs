@@ -32,12 +32,16 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             this.me = me;
         }
 
+        int tick = 0;
+
         public void Step () {
-            if (me.RemainingActionCooldownTicks ==0) {
+            if (me.RemainingActionCooldownTicks ==0 && tick %20 ==0) {
                 
                 ExecuteNextCommand();
                 lastActionTick = world.TickIndex;
             }
+
+            tick++;
         }
 
         private void ExecuteNextCommand () {
@@ -51,29 +55,32 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             commands.Add(new AssignCommand(group));
         }
 
-
+        Dictionary<int, Vector> lastMoveCommand = new Dictionary<int, Vector>();
   
         internal void Move (double x, double y, int groupId) {
 
             //    commands.RemoveAll(c => c is MoveCommand);
 
+            var v = new Vector(x, y);
 
-            if (x<1 || y< 1/*|| lastMoveX == x && lastMoveY == y*/)
+            if (lastMoveCommand.ContainsKey(groupId) && lastMoveCommand[groupId].Equals(v)) 
+                return;
+            if (Math.Abs( x)<1 ||Math.Abs( y)< 1/*|| lastMoveX == x && lastMoveY == y*/)
                 return;
 
             if (selectedGroup != groupId)
                 Select(groupId);
 
             commands.Add(new MoveCommand(x, y));
-            lastMoveX = x;
-            lastMoveY = y;
+
+            lastMoveCommand[groupId] = v;
+
         }
 
         
         private Player me;
         private int selectedGroup;
-        private double lastMoveX;
-        private double lastMoveY;
+        
     }
 
 

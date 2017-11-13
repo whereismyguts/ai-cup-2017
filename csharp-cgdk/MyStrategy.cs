@@ -68,8 +68,8 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                     else
                         enemies.Add(v.Id, new ActualUnit(v));
                 //TODO clustering 
-                //  groups.Add(new HelicoptersGroup(commander, (int)VehicleType.Helicopter));
-                groups.Add(new FightersGroup(commander, (int)VehicleType.Fighter, VehicleType.Fighter));
+                  groups.Add(new HelicoptersGroup(commander, (int)VehicleType.Helicopter, VehicleType.Helicopter));
+                  groups.Add(new FightersGroup(commander, (int)VehicleType.Fighter, VehicleType.Fighter));
 
                 new System.Threading.Tasks.Task(() => { Render.Run(); }).Start();
             }

@@ -24,9 +24,9 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         public double WorkDistance {
             get {
                 switch (UnitType) {
-                    case VehicleType.Fighter: return 200;
-                    case VehicleType.Helicopter: return 150;
-                    default: return 300;
+                    case VehicleType.Fighter: return 100;
+                    case VehicleType.Helicopter: return 50;
+                    default: return 60;
                 }
             }
         }

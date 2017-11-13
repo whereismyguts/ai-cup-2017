@@ -74,7 +74,6 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
                 
 
-                DrawUnits();
 
                 foreach (var group in Groups) {
                     DrawGrid(group);
@@ -82,6 +81,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                     DrawPoint(group.Position, Color.Green);
                 }
 
+                DrawUnits();
                 spriteBatch.End();
 
                 //UpdateInProcess = false;
