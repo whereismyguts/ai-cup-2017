@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.Linq;
 
 namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
     static class Render {
@@ -19,14 +20,19 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         }
 
         internal static void Update (Dictionary<long, ActualUnit> enemies, Dictionary<long, ActualUnit> vehicles, List<CombatGroup> groups) {
-            if (window == null) 
+            if (window == null)
                 return;
-            
+
             window.Units = vehicles;
             window.Enemies = enemies;
 
             window.Groups = groups;
             window.CustomUpdate();
+        }
+        internal static void Update (List<Command> commands) {
+            if (window == null)
+                return;
+            window.commands = commands;
         }
     }
 
@@ -61,9 +67,12 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
 
         Color gridColor = new Color(Color.Black, 2.5f);
+        internal List<Command> commands;
 
         public void CustomUpdate () {
             try {
+                if (GraphicsDevice == null || spriteBatch == null)
+                    return;
 
                 GraphicsDevice.Clear(Color.White);
 
@@ -72,7 +81,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                   SamplerState.PointClamp,
                   null, null, null, null);
 
-                
+
 
 
                 foreach (var group in Groups) {
@@ -82,6 +91,9 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                 }
 
                 DrawUnits();
+
+                DrawCommands();
+
                 spriteBatch.End();
 
                 //UpdateInProcess = false;
@@ -98,6 +110,30 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             var pos = VToScreenV2(point);// new Vector2((float)point.X / 1024f * graphics.PreferredBackBufferWidth, (float)point.Y / 1024f * graphics.PreferredBackBufferHeight) - new Vector2(5, 5);
             DrawPoint(pos, color, width);
         }
+
+
+        void DrawPixel (double x, double y, Color color) {
+
+            spriteBatch.Draw(dummyTexture,
+                new Rectangle((int)x, (int)y, 1, 1),
+               null,
+                color, //colour of line
+                0, //angle of line (calulated above)
+                new Vector2(0, 0), // point in line about which to rotate
+                SpriteEffects.None,
+                0);
+        }
+
+        public void DrawLine (Vector2 point1, Vector2 point2, int lineWidth, Color color) {
+
+            float angle = (float)Math.Atan2(point2.Y - point1.Y, point2.X - point1.X);
+            float length = Vector2.Distance(point1, point2);
+
+            spriteBatch.Draw(dummyTexture, point1, null, color,
+            angle, Vector2.Zero, new Vector2(length, lineWidth),
+            SpriteEffects.None, 0f);
+        }
+
 
         void DrawPoint (Vector2 point, Color color, float width = 10) {
 
@@ -127,6 +163,20 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                 (float)v.X / 1024f * graphics.PreferredBackBufferWidth,
                 (float)v.Y / 1024f * graphics.PreferredBackBufferHeight);
         }
+
+        void DrawCommands () {
+            foreach (var c in commands) {
+                MoveCommand move = c as MoveCommand;
+
+                if (move != null) {
+                    var g = Groups.FirstOrDefault(gr => gr.Id == move.GroupId);
+                    if (g != null)
+                        DrawLine(VToScreenV2(g.Position), VToScreenV2(new Vector(g.Position.X + move.X, g.Position.Y + move.Y)), 3, Color.LightGreen);
+                }
+            }
+
+        }
+
 
         private void DrawGrid (CombatGroup group) {
 

@@ -12,12 +12,12 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             //   System.Diagnostics.Process.Start(@"..\..\..\localrunner\local-runner.bat");
 
             
-            try {
+          //  try {
                 new Runner(args.Length == 3 ? args : new[] { "127.0.0.1", "31001", "0000000000000000" }).Run();
-            }
-            catch  {
-                //Render.Run();
-            }
+        //    }
+            //catch(System.Exception e)  {
+            //    //Render.Run();
+            //}
         }
 
         private Runner(IReadOnlyList<string> args) {
@@ -26,7 +26,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         }
 
         public void Run() {
-            try {
+          //  try {
                 remoteProcessClient.WriteTokenMessage(token);
                 remoteProcessClient.WriteProtocolVersionMessage();
                 remoteProcessClient.ReadTeamSizeMessage();
@@ -47,9 +47,13 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
                     remoteProcessClient.WriteMoveMessage(move);
                 }
-            } finally {
-                remoteProcessClient.Close();
-            }
+            //}
+            //catch (System.Exception e) {
+
+            //}
+            //finally {
+            //    remoteProcessClient.Close();
+            //}
         }
     }
 }

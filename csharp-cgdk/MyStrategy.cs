@@ -32,13 +32,15 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             InitializeTick(me, world, move);
 
 
-            if (world.TickIndex > 0 && world.TickIndex % 20 == 0)
+            if (world.TickIndex > 0 && world.TickIndex % 20 == 0) {
                 foreach (var g in groups) {
                     g.Update(vehicles.Values.ToList());
                     g.Step(enemies);
                 }
+                groups.RemoveAll(g => g.Count == 0);
+            }
             commander.Step();
-               Render.Update(enemies, vehicles, groups);
+            Render.Update(enemies, vehicles, groups);
         }
 
         float GetUnitTypeValue (ActualUnit unit) {
@@ -68,13 +70,13 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                     else
                         enemies.Add(v.Id, new ActualUnit(v));
                 //TODO clustering 
-                  groups.Add(new HelicoptersGroup(commander, (int)VehicleType.Helicopter, VehicleType.Helicopter));
-                  groups.Add(new FightersGroup(commander, (int)VehicleType.Fighter, VehicleType.Fighter));
+                groups.Add(new HelicoptersGroup(commander, (int)VehicleType.Helicopter, VehicleType.Helicopter));
+                groups.Add(new FightersGroup(commander, (int)VehicleType.Fighter, VehicleType.Fighter));
 
                 new System.Threading.Tasks.Task(() => { Render.Run(); }).Start();
             }
 
-            commander.Update(world, move, me);
+            commander.Update(world, move, me, vehicles);
 
             if (world.VehicleUpdates.Length > 0) {
                 foreach (var update in world.VehicleUpdates) {

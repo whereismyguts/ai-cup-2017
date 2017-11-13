@@ -17,28 +17,33 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
         internal void Select (VehicleType unitType) {
             commands.Add(new SelectCommand(unitType));
-            selectedGroup = -1;
+            //selectedGroup = -1;
         }
 
         internal void Select (int id) {
             commands.Add(new SelectCommand(id));
-            selectedGroup = id;
+            //selectedGroup = id;
         }
 
 
-        internal void Update (World world, Move move, Player me) {
+        internal void Update (World world, Move move, Player me, Dictionary<long,ActualUnit> vehicles) {
             this.move = move;
             this.world = world;
             this.me = me;
+
+            var selected = world.VehicleUpdates.FirstOrDefault(v => v.IsSelected && vehicles.ContainsKey(v.Id));
+            if (selected != null && vehicles[selected.Id].Groups.Length>0)
+                selectedGroup = vehicles[selected.Id].Groups[0];
         }
 
         int tick = 0;
 
         public void Step () {
-            if (me.RemainingActionCooldownTicks ==0 && tick %20 ==0) {
-                
+            if (me.RemainingActionCooldownTicks == 0) {
                 ExecuteNextCommand();
                 lastActionTick = world.TickIndex;
+
+                Render.Update(commands);
             }
 
             tick++;
@@ -56,68 +61,72 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         }
 
         Dictionary<int, Vector> lastMoveCommand = new Dictionary<int, Vector>();
-  
+
         internal void Move (double x, double y, int groupId) {
 
             //    commands.RemoveAll(c => c is MoveCommand);
 
             var v = new Vector(x, y);
 
-            if (lastMoveCommand.ContainsKey(groupId) && lastMoveCommand[groupId].Equals(v)) 
+            //if (lastMoveCommand.ContainsKey(groupId) && lastMoveCommand[groupId].Equals(v))
+            //    return;
+            if (Math.Abs(x) < 1 || Math.Abs(y) < 1/*|| lastMoveX == x && lastMoveY == y*/)
                 return;
-            if (Math.Abs( x)<1 ||Math.Abs( y)< 1/*|| lastMoveX == x && lastMoveY == y*/)
-                return;
+
+            commands.RemoveAll(c => c.GroupId == groupId);
 
             if (selectedGroup != groupId)
                 Select(groupId);
 
-            commands.Add(new MoveCommand(x, y));
 
-            lastMoveCommand[groupId] = v;
+            commands.Add(new MoveCommand(x, y, groupId));
 
+           // lastMoveCommand[groupId] = v;
         }
 
-        
         private Player me;
         private int selectedGroup;
-        
     }
 
 
 
     abstract class Command {
+        public int GroupId { get; internal set; } = -1;
+
         public abstract void Execute (Move move);
     }
 
-    class EraseCommand: Command {
-        public override void Execute (Move move) {
-            move.Action = ActionType.None;
-        }
-    }
+    //class EraseCommand: Command {
+    //    public override void Execute (Move move) {
+    //        move.Action = ActionType.None;
+    //    }
+    //}
 
     class AssignCommand: Command {
-        int group;
+
         public AssignCommand (int group) {
-            this.group = group;
+            this.GroupId = group;
         }
         public override void Execute (Move move) {
             move.Action = ActionType.Assign;
-            move.Group = group;
+            move.Group = GroupId;
         }
     }
 
     class MoveCommand: Command {
-        double x; double y;
+        public double X { get; private set; }
+        public double Y { get; private set; }
 
-        public MoveCommand (double x, double y) {
-            this.x = x;
-            this.y = y;
+        public MoveCommand (double x, double y, int group) {
+            this.X = x;
+            this.Y = y;
+            GroupId = group;
         }
 
         public override void Execute (Move move) {
             move.Action = ActionType.Move;
-            move.X = x;
-            move.Y = y;
+            move.X = X;
+            move.Y = Y;
         }
     }
 
@@ -125,22 +134,22 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         VehicleType unitTypeToSelect;
         bool typeMatters = false;
         object rectangle;
-         int group = -1;
 
         public SelectCommand (VehicleType unitType) {
             typeMatters = true;
             this.unitTypeToSelect = unitType;
+            GroupId = -1;
         }
 
         public SelectCommand (int id) {
-            this.group = id;
+            this.GroupId = id;
         }
 
         public override void Execute (Move move) {
             move.Action = ActionType.ClearAndSelect;
 
-            if (group > -1) {
-                move.Group = group;
+            if (GroupId > -1) {
+                move.Group = GroupId;
             }
 
             if (typeMatters)

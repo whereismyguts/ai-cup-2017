@@ -42,9 +42,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             AerialAtackRange = newVehicle.AerialAttackRange;
             GroundAttackRange = newVehicle.GroundAttackRange;
             IsMy = newVehicle.PlayerId == 1;
-
-
-            
+            Groups = new int[] { };
         }
 
         internal void Update (VehicleUpdate update) {

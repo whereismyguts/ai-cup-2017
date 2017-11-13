@@ -12,6 +12,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         public int Id { get; }
         public Vector Goal { get; internal set; }
         public Dictionary<IntVector, double> Potentials { get; private set; } = new Dictionary<IntVector, double>();
+        public int Count { get; internal set; }
         public CombatGroup (Commander commander, int id, VehicleType type) {
             this.Commander = commander;
             Id = id;
@@ -57,17 +58,16 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             double x = 0;
             double y = 0;
 
-            int count = 0;
+            Count = 0;
 
             unitList.ForEach(u => {
                 if (u.UnitType == GroupType && u.Durability > 0) {
                     x += u.Position.X;
                     y += u.Position.Y;
-                    count++;
+                    Count++;
                 }
             });
-
-            Position = new Vector(x / count, y / count);
+            Position = Count > 0? new Vector(x / Count, y / Count) : new Vector();
         }
     }
 
