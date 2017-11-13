@@ -16,24 +16,29 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         List<Command> commands = new List<Command>();
 
         internal void Select (VehicleType unitType) {
+
             commands.Add(new SelectCommand(unitType));
             //selectedGroup = -1;
         }
 
         internal void Select (int id) {
+
+            if (commands.FirstOrDefault(c => c.GroupId == id && c is ShrinkCommand) != null)
+                return;
+
             commands.Add(new SelectCommand(id));
             //selectedGroup = id;
         }
 
 
-        internal void Update (World world, Move move, Player me, Dictionary<long,ActualUnit> vehicles) {
+        internal void Update (World world, Move move, Player me, Dictionary<long, ActualUnit> vehicles) {
             this.move = move;
             this.world = world;
             this.me = me;
 
-            var selected = world.VehicleUpdates.FirstOrDefault(v => v.IsSelected && vehicles.ContainsKey(v.Id));
-            if (selected != null && vehicles[selected.Id].Groups.Length>0)
-                selectedGroup = vehicles[selected.Id].Groups[0];
+            var selected = vehicles.Values.FirstOrDefault(v => v.IsSelected);
+            if (selected != null && selected.Groups.Length > 0)
+                selectedGroup = selected.Groups[0];
         }
 
         int tick = 0;
@@ -70,22 +75,30 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
             //if (lastMoveCommand.ContainsKey(groupId) && lastMoveCommand[groupId].Equals(v))
             //    return;
-            if (Math.Abs(x) < 1 || Math.Abs(y) < 1/*|| lastMoveX == x && lastMoveY == y*/)
+            if (Math.Abs(x) < 1 && Math.Abs(y) < 1/*|| lastMoveX == x && lastMoveY == y*/)
                 return;
 
-            commands.RemoveAll(c => c.GroupId == groupId);
+            commands.RemoveAll(c => c.GroupId == groupId && c is MoveCommand);
+
+            if (commands.FirstOrDefault(c => c.GroupId == groupId && c is ShrinkCommand) != null)
+                return;
 
             if (selectedGroup != groupId)
                 Select(groupId);
 
-
             commands.Add(new MoveCommand(x, y, groupId));
 
-           // lastMoveCommand[groupId] = v;
+            // lastMoveCommand[groupId] = v;
         }
 
         private Player me;
         private int selectedGroup;
+
+        internal void Shrink (int id, Vector pos, double factor) {
+            if (selectedGroup != id)
+                Select(id);
+            commands.Add(new ShrinkCommand(id, pos, factor));
+        }
     }
 
 
@@ -101,7 +114,23 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
     //        move.Action = ActionType.None;
     //    }
     //}
+    class ShrinkCommand: Command {
+        public double Factor { get; }
+        public Vector Position { get; }
 
+        public ShrinkCommand (int id, Vector pos, double factor) {
+            this.GroupId = id;
+            this.Factor = factor;
+            Position = pos;
+        }
+
+        public override void Execute (Move move) {
+            move.Factor = Factor;
+            move.X = Position.X;
+            move.Y = Position.Y;
+            move.Action = ActionType.Scale;
+        }
+    }
     class AssignCommand: Command {
 
         public AssignCommand (int group) {

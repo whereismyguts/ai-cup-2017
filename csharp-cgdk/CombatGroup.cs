@@ -21,54 +21,96 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             commander.Assign(id);
         }
 
-        public virtual void Step (Dictionary<long, ActualUnit> enemies) {
+        public virtual void Step (Dictionary<long, ActualUnit> enemies, Dictionary<long, ActualUnit> vehicles) {
             Potentials = new Dictionary<IntVector, double>();
+          //  var dValues = new Dictionary<IntVector, double>();
 
-            for (int i = (int)Position.X - CellWidth * 2; i <= (int)Position.X + CellWidth * 2; i += CellWidth)
-                for (int j = (int)Position.Y - CellWidth * 2; j <= (int)Position.Y + CellWidth * 2; j += CellWidth) {
+            for (int i = (int)Position.X - CellWidth*3; i <= (int)Position.X + CellWidth*3; i += CellWidth)
+                for (int j = (int)Position.Y - CellWidth*3; j <= (int)Position.Y + CellWidth*3; j += CellWidth) {
 
-                    if (i < 1 || j < 1 || i > 1022 || j > 1022)
+                    if (i < 1 || j < 1 || i > 1022 || j > 1022 || Position.DistanceTo(i,j) > CellWidth*3.5)
                         continue;
 
-                    double eValue = 1;
+                    double eValue = 0;
 
-                    double dValue = (Math.Min(Math.Abs(i - Position.X) / 1024f, Math.Abs(j - Position.Y) / 1024f) + 1-Math.Min(Math.Abs(i - 512) / 512f, Math.Abs(j - 512) / 512f))/2f;
+                    var cell = new IntVector(i, j);
+
+                   // dValues[cell]  = (Math.Min(Math.Abs(i - Position.X) / 1024f, Math.Abs(j - Position.Y) / 1024f) + 1 - Math.Min(Math.Abs(i - 512) / 512f, Math.Abs(j - 512) / 512f)) / 5f;
 
                     foreach (var e in enemies) {
                         var distanceToEnemy = e.Value.Position.DistanceTo(i, j);
-                        if (distanceToEnemy <= e.Value.WorkDistance && distanceToEnemy > 1) {
-                            var newValue = distanceToEnemy / e.Value.WorkDistance * GetUnitDanger(e.Value);
-                            if (newValue > 0 && newValue < eValue)
+                            var newValue =( 100/ distanceToEnemy) * GetUnitDanger(e.Value);
+                            if (Math.Abs(newValue) > 0 && Math.Abs(newValue) > Math.Abs(eValue)) 
                                 eValue = newValue;
+                    }
+                    foreach (var v in vehicles) {
+                        var distance = v.Value.Position.DistanceTo(i, j);
+                        if (distance <= v.Value.WorkDistance  && distance > 0) {
+                            var newValue = v.Value.WorkDistance/distance  * GetFriendUnitDanger(v.Value);
+                              if (Math.Abs(newValue) > 0 &&  Math.Abs(newValue) > Math.Abs(eValue)) 
+                            eValue = newValue;
                         }
                     }
-                    Potentials[new IntVector(i, j)] = eValue + dValue ;
+
+                    Potentials[cell] = eValue  ;
                 }
 
-            var best = Potentials.OrderBy(p => p.Value).Last().Key;
+            var best = Potentials.OrderBy(p => 
+                p.Value + (1- Vector.MinAngle(p.Key, direction)/Math.PI) 
+              ).Last().Key ;
+
             Goal = new Vector(best.X, best.Y);
-            Commander.Move(best.X - Position.X, best.Y - Position.Y, Id);
+            direction = new Vector(best.X - Position.X, best.Y - Position.Y);
+            Commander.Move(direction.X, direction.Y, Id); // TODO send vector
+        }
+        Vector direction;
+        protected virtual double GetFriendUnitDanger (ActualUnit value) {
+            return 0;
         }
 
         protected virtual double GetUnitDanger (ActualUnit value) {
             return 0;
         }
 
-        internal void Update (List<ActualUnit> unitList) {
+        internal void Update (Dictionary<long, ActualUnit> unitList) {
             double x = 0;
             double y = 0;
 
+
+            double minX = double.MaxValue;
+            double maxX = double.MinValue;
+            double minY = double.MaxValue;
+            double maxY = double.MinValue;
             Count = 0;
 
-            unitList.ForEach(u => {
+            foreach (var u in unitList.Values)
                 if (u.UnitType == GroupType && u.Durability > 0) {
+                    if (u.Position.X > maxX)
+                        maxX = u.Position.X;
+                     if (u.Position.X < minX)
+                        minX = u.Position.X;
+
+                    if (u.Position.Y > maxY)
+                        maxY = u.Position.Y;
+                     if (u.Position.Y < minY)
+                        minY = u.Position.Y;
+
                     x += u.Position.X;
                     y += u.Position.Y;
                     Count++;
                 }
-            });
-            Position = Count > 0? new Vector(x / Count, y / Count) : new Vector();
+
+            Position = Count > 0 ? new Vector(x / Count, y / Count) : new Vector();
+
+            if (TimeSinceLastScaling > 30 && (maxX - minX < 150 || maxY - minY < 150)){
+                Commander.Shrink(Id, Position, 0.5);
+                TimeSinceLastScaling = 0;
+            }
+
+            TimeSinceLastScaling++;
         }
+
+        int TimeSinceLastScaling = 0;
     }
 
 
@@ -76,12 +118,21 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         public FightersGroup (Commander commander, int id, VehicleType type) : base(commander, id, type) {
         }
 
+        protected override double GetFriendUnitDanger (ActualUnit value) {
+            switch (value.UnitType) {
+                case VehicleType.Fighter: return 0;
+                case VehicleType.Helicopter: return 0.5;
+                case VehicleType.Arrv: return -0.3;
+                default: return 0;
+            }
+        }
+
 
         protected override double GetUnitDanger (ActualUnit value) {
             switch (value.UnitType) {
-                case VehicleType.Fighter: return -1;
-                case VehicleType.Helicopter: return -1;
-                case VehicleType.Ifv: return 1;
+                case VehicleType.Fighter: return 0.5;
+                case VehicleType.Helicopter: return 1;
+                case VehicleType.Ifv: return -1;
                 case VehicleType.Tank: return 0;
                 default: return 0;
             }
@@ -90,6 +141,14 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
     public class HelicoptersGroup: CombatGroup {
         public HelicoptersGroup (Commander commander, int id, VehicleType type) : base(commander, id, type) {
+        }
+
+        protected override double GetFriendUnitDanger (ActualUnit value) {
+            switch (value.UnitType) {
+                case VehicleType.Fighter: return 0.5;
+                case VehicleType.Helicopter: return 0;
+                default: return -0.5;
+            }
         }
 
         protected override double GetUnitDanger (ActualUnit value) {

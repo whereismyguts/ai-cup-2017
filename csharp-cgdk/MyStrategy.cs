@@ -1,7 +1,7 @@
-using Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk.Model;
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk.Model;
 
 namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
     public sealed class MyStrategy: IStrategy {
@@ -34,8 +34,8 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
             if (world.TickIndex > 0 && world.TickIndex % 20 == 0) {
                 foreach (var g in groups) {
-                    g.Update(vehicles.Values.ToList());
-                    g.Step(enemies);
+                    g.Update(vehicles);
+                    g.Step(enemies, vehicles);
                 }
                 groups.RemoveAll(g => g.Count == 0);
             }
@@ -76,8 +76,12 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                 new System.Threading.Tasks.Task(() => { Render.Run(); }).Start();
             }
 
-            commander.Update(world, move, me, vehicles);
+            UpdateUnits(world);
 
+            commander.Update(world, move, me, vehicles);
+        }
+
+        private void UpdateUnits (World world) {
             if (world.VehicleUpdates.Length > 0) {
                 foreach (var update in world.VehicleUpdates) {
 
@@ -87,10 +91,8 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                         else
                                 if (enemies.ContainsKey(update.Id))
                             enemies.Remove(update.Id);
-
                         continue;
                     }
-
                     if (vehicles.ContainsKey(update.Id))
                         vehicles[update.Id].Update(update);
                     else
