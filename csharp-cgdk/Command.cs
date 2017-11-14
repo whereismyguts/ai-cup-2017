@@ -11,7 +11,6 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         World world;
         Move move;
 
-        int lastActionTick = -100;
 
         List<Command> commands = new List<Command>();
 
@@ -44,14 +43,12 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         int tick = 0;
 
         public void Step () {
-            if (me.RemainingActionCooldownTicks == 0) {
+            if (me.RemainingActionCooldownTicks == 0 ) {
                 ExecuteNextCommand();
-                lastActionTick = world.TickIndex;
-
                 Render.Update(commands);
             }
 
-            tick++;
+          
         }
 
         private void ExecuteNextCommand () {
@@ -78,12 +75,12 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             if (Math.Abs(x) < 1 && Math.Abs(y) < 1/*|| lastMoveX == x && lastMoveY == y*/)
                 return;
 
-            commands.RemoveAll(c => c.GroupId == groupId && c is MoveCommand);
+               commands.RemoveAll(c => c.GroupId == groupId &&( c is MoveCommand || ( c is SelectCommand && c.GroupId!=-1)));
 
             if (commands.FirstOrDefault(c => c.GroupId == groupId && c is ShrinkCommand) != null)
                 return;
 
-            if (selectedGroup != groupId)
+          //  if (selectedGroup != groupId)
                 Select(groupId);
 
             commands.Add(new MoveCommand(x, y, groupId));
@@ -101,19 +98,12 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         }
     }
 
-
-
     abstract class Command {
         public int GroupId { get; internal set; } = -1;
 
         public abstract void Execute (Move move);
     }
 
-    //class EraseCommand: Command {
-    //    public override void Execute (Move move) {
-    //        move.Action = ActionType.None;
-    //    }
-    //}
     class ShrinkCommand: Command {
         public double Factor { get; }
         public Vector Position { get; }
@@ -141,7 +131,6 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             move.Group = GroupId;
         }
     }
-
     class MoveCommand: Command {
         public double X { get; private set; }
         public double Y { get; private set; }
@@ -158,7 +147,6 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             move.Y = Y;
         }
     }
-
     class SelectCommand: Command {
         VehicleType unitTypeToSelect;
         bool typeMatters = false;

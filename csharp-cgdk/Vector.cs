@@ -7,6 +7,14 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             Y = y;
         }
 
+        public static Vector operator / (Vector p1, float a) {
+            return new Vector(p1.X / a, p1.Y / a);
+        }
+
+        public static Vector operator + (Vector p1, Vector p2) {
+            return new Vector(p1.X + p2.X, p1.Y + p2.Y);
+        }
+
         public IntVector IntVector { get { return new IntVector((int)X, (int)Y); } }
         public double X { get; set; }
         public double Y { get; set; }
@@ -17,8 +25,12 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             return dx * dx + dy * dy;
         }
 
-        internal double DistanceTo (int i, int j) {
+        internal double DistanceTo (double i, double j) {
             return Math.Sqrt(SquareDistanceTo(i, j));
+        }
+
+        internal double DistanceTo (Vector position) {
+            return Math.Sqrt(SquareDistanceTo(position.X, position.Y));
         }
 
         public override bool Equals (object obj) {
@@ -50,6 +62,13 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
         public int X { get; set; }
         public int Y { get; set; }
+
+        public static IntVector operator + (IntVector p1, IntVector p2) {
+            return new IntVector(p1.X + p2.X, p1.Y + p2.Y);
+        }
+        public static IntVector operator / (IntVector p1, int a) {
+            return new IntVector(p1.X / a, p1.Y / a);
+        }
 
         internal int SquareDistanceTo (int x, int y) {
             var dx = X - x;

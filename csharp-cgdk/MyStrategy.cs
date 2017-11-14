@@ -69,17 +69,35 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                         vehicles.Add(v.Id, new ActualUnit(v));
                     else
                         enemies.Add(v.Id, new ActualUnit(v));
-                //TODO clustering 
+
                 groups.Add(new HelicoptersGroup(commander, (int)VehicleType.Helicopter, VehicleType.Helicopter));
                 groups.Add(new FightersGroup(commander, (int)VehicleType.Fighter, VehicleType.Fighter));
+                groups.Add(new IfvGroup(commander, (int)VehicleType.Ifv, VehicleType.Ifv));
+                groups.Add(new TankGroup(commander, (int)VehicleType.Tank, VehicleType.Tank));
+                groups.Add(new ArrvGroup(commander, (int)VehicleType.Arrv, VehicleType.Arrv));
 
                 new System.Threading.Tasks.Task(() => { Render.Run(); }).Start();
             }
 
             UpdateUnits(world);
 
+
+            if (world.TickIndex % 300 == 0) {
+                clusters = Clusterer.Clusterize(vehicles);
+
+                //foreach (Cluster c in clusters) {
+
+                //}
+            }
+            else clusters.ForEach(c => c.Update());
+            Render.Update(clusters);
+
+            
+
             commander.Update(world, move, me, vehicles);
         }
+
+        List<Cluster> clusters;
 
         private void UpdateUnits (World world) {
             if (world.VehicleUpdates.Length > 0) {

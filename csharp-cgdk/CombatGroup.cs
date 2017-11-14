@@ -23,7 +23,9 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
         public virtual void Step (Dictionary<long, ActualUnit> enemies, Dictionary<long, ActualUnit> vehicles) {
             Potentials = new Dictionary<IntVector, double>();
-          //  var dValues = new Dictionary<IntVector, double>();
+            var dValues = new Dictionary<IntVector, double>();
+
+          //  bool includeDistanceValue = false;
 
             for (int i = (int)Position.X - CellWidth*3; i <= (int)Position.X + CellWidth*3; i += CellWidth)
                 for (int j = (int)Position.Y - CellWidth*3; j <= (int)Position.Y + CellWidth*3; j += CellWidth) {
@@ -35,18 +37,21 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
                     var cell = new IntVector(i, j);
 
-                   // dValues[cell]  = (Math.Min(Math.Abs(i - Position.X) / 1024f, Math.Abs(j - Position.Y) / 1024f) + 1 - Math.Min(Math.Abs(i - 512) / 512f, Math.Abs(j - 512) / 512f)) / 5f;
+                    dValues[cell]  = (Math.Min(Math.Abs(i - Position.X) / 1024f, Math.Abs(j - Position.Y) / 1024f) + 1 - Math.Min(Math.Abs(i - 512) / 512f, Math.Abs(j - 512) / 512f)) / 5f;
 
                     foreach (var e in enemies) {
                         var distanceToEnemy = e.Value.Position.DistanceTo(i, j);
-                            var newValue =( 100/ distanceToEnemy) * GetUnitDanger(e.Value);
+                
+                            var newValue =( 100/ distanceToEnemy) * GetEnemyValue(e.Value);
                             if (Math.Abs(newValue) > 0 && Math.Abs(newValue) > Math.Abs(eValue)) 
                                 eValue = newValue;
                     }
                     foreach (var v in vehicles) {
+                        if (v.Value.UnitType == GroupType)
+                            continue;
                         var distance = v.Value.Position.DistanceTo(i, j);
                         if (distance <= v.Value.WorkDistance  && distance > 0) {
-                            var newValue = v.Value.WorkDistance/distance  * GetFriendUnitDanger(v.Value);
+                            var newValue = v.Value.WorkDistance/distance  * -GetFriendUnitDanger(v.Value) ;
                               if (Math.Abs(newValue) > 0 &&  Math.Abs(newValue) > Math.Abs(eValue)) 
                             eValue = newValue;
                         }
@@ -54,6 +59,10 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
                     Potentials[cell] = eValue  ;
                 }
+
+    //        if (includeDistanceValue)
+    //            foreach (var dValue in dValues)
+      //              Potentials[dValue.Key] += dValue.Value;
 
             var best = Potentials.OrderBy(p => 
                 p.Value + (1- Vector.MinAngle(p.Key, direction)/Math.PI) 
@@ -64,11 +73,11 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             Commander.Move(direction.X, direction.Y, Id); // TODO send vector
         }
         Vector direction;
-        protected virtual double GetFriendUnitDanger (ActualUnit value) {
+        protected virtual double GetFriendUnitDanger (ActualUnit unit) {
             return 0;
         }
 
-        protected virtual double GetUnitDanger (ActualUnit value) {
+        protected virtual double GetEnemyValue (ActualUnit unit) {
             return 0;
         }
 
@@ -117,19 +126,16 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
     public class FightersGroup: CombatGroup {
         public FightersGroup (Commander commander, int id, VehicleType type) : base(commander, id, type) {
         }
-
-        protected override double GetFriendUnitDanger (ActualUnit value) {
-            switch (value.UnitType) {
+        protected override double GetFriendUnitDanger (ActualUnit unit) {
+            switch (unit.UnitType) {
                 case VehicleType.Fighter: return 0;
                 case VehicleType.Helicopter: return 0.5;
                 case VehicleType.Arrv: return -0.3;
                 default: return 0;
             }
         }
-
-
-        protected override double GetUnitDanger (ActualUnit value) {
-            switch (value.UnitType) {
+        protected override double GetEnemyValue (ActualUnit unit) {
+            switch (unit.UnitType) {
                 case VehicleType.Fighter: return 0.5;
                 case VehicleType.Helicopter: return 1;
                 case VehicleType.Ifv: return -1;
@@ -142,17 +148,15 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
     public class HelicoptersGroup: CombatGroup {
         public HelicoptersGroup (Commander commander, int id, VehicleType type) : base(commander, id, type) {
         }
-
-        protected override double GetFriendUnitDanger (ActualUnit value) {
-            switch (value.UnitType) {
+        protected override double GetFriendUnitDanger (ActualUnit unit) {
+            switch (unit.UnitType) {
                 case VehicleType.Fighter: return 0.5;
                 case VehicleType.Helicopter: return 0;
                 default: return -0.5;
             }
         }
-
-        protected override double GetUnitDanger (ActualUnit value) {
-            switch (value.UnitType) {
+        protected override double GetEnemyValue (ActualUnit unit) {
+            switch (unit.UnitType) {
                 case VehicleType.Fighter: return 1;
                 case VehicleType.Helicopter: return 1;
                 case VehicleType.Ifv: return 1;
@@ -162,4 +166,58 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         }
     }
 
+    public class IfvGroup: CombatGroup {
+        public IfvGroup (Commander commander, int id, VehicleType type) : base(commander, id, type) {
+        }
+
+        protected override double GetEnemyValue (ActualUnit value) {
+            switch (value.UnitType) {
+                case VehicleType.Fighter: return 1;
+                case VehicleType.Helicopter: return 1;
+                default: return -1;
+            }
+        }
+        protected override double GetFriendUnitDanger (ActualUnit value) {
+            switch (value.UnitType) {
+                case VehicleType.Fighter: return 0;
+                case VehicleType.Helicopter: return 0;
+                default: return 1;
+            }
+        }
+    }
+
+    public class ArrvGroup: CombatGroup {
+        public ArrvGroup (Commander commander, int id, VehicleType type) : base(commander, id, type) {
+        }
+
+        protected override double GetEnemyValue (ActualUnit value) {
+            switch (value.UnitType) {
+                case VehicleType.Fighter: return 0;
+                default: return -0.1;
+            }
+        }
+        protected override double GetFriendUnitDanger (ActualUnit value) {
+                 return -1;
+        }
+    }
+
+    public class TankGroup: CombatGroup {
+        public TankGroup (Commander commander, int id, VehicleType type) : base(commander, id, type) {
+        }
+
+        protected override double GetEnemyValue (ActualUnit value) {
+            switch (value.UnitType) {
+                case VehicleType.Fighter: return 0;
+                case VehicleType.Helicopter: return -1;
+                default: return 1;
+            }
+        }
+        protected override double GetFriendUnitDanger (ActualUnit value) {
+            switch (value.UnitType) {
+                case VehicleType.Fighter: return 0;
+                case VehicleType.Helicopter: return 0;
+                default: return 1;
+            }
+        }
+    }
 }

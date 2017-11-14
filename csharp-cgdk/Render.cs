@@ -32,7 +32,13 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         internal static void Update (List<Command> commands) {
             if (window == null)
                 return;
-            window.commands = commands;
+            window.Commands = commands;
+        }
+
+        internal static void Update (List<Cluster> clusters) {
+            if (window == null)
+                return;
+            window.Clusters = clusters;
         }
     }
 
@@ -52,6 +58,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
         public Dictionary<long, ActualUnit> Units { get; internal set; }
         public List<CombatGroup> Groups { get; internal set; }
+        public List<Cluster> Clusters { get; internal set; }
 
         protected override void Initialize () {
             base.Initialize();
@@ -67,7 +74,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
 
         Color gridColor = new Color(Color.Black, 2.5f);
-        internal List<Command> commands;
+        internal List<Command> Commands;
 
         public void CustomUpdate () {
             try {
@@ -85,14 +92,14 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
 
                 foreach (var group in Groups) {
-                    DrawGrid(group);
-                    DrawPoint(group.Goal, Color.Violet);
-                    DrawPoint(group.Position, Color.Green);
+                    //   DrawGrid(group);
+                    DrawLine(VToScreenV2( group.Goal), VToScreenV2(group.Position), 3, Color.Violet);
                 }
 
                 DrawUnits();
 
-                DrawCommands();
+                //DrawCommands();
+                DrawClusters();
 
                 spriteBatch.End();
 
@@ -101,6 +108,31 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             catch (Exception e) {
             }
         }
+
+        private void DrawClusters () {
+            foreach (var c in Clusters) {
+
+
+                Vector2[] vertex = new Vector2[] {
+                    VToScreenV2(new Vector(c.PositionX - c.Radius, c.PositionY - c.Radius)),
+                    VToScreenV2(new Vector(c.PositionX - c.Radius, c.PositionY + c.Radius)),
+                    VToScreenV2(new Vector(c.PositionX + c.Radius, c.PositionY + c.Radius)),
+                    VToScreenV2(new Vector(c.PositionX + c.Radius, c.PositionY - c.Radius)) };
+
+                DrawPolygon(vertex, 4, Color.Blue);
+            }
+        }
+
+        public void DrawPolygon (Vector2[] vertex, int count, Color color) {
+            if (count > 0) {
+                for (int i = 0; i < count - 1; i++) {
+                    DrawLine(vertex[i], vertex[i + 1], 1, color);
+                }
+                DrawLine(vertex[count - 1], vertex[0], 1, color);
+            }
+        }
+
+
 
         protected override void Update (GameTime gameTime) {
             //   base.Update(gameTime);
@@ -165,7 +197,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         }
 
         void DrawCommands () {
-            foreach (var c in commands) {
+            foreach (var c in Commands) {
                 MoveCommand move = c as MoveCommand;
 
                 if (move != null) {
@@ -197,7 +229,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             foreach (var cell in group.Potentials) {
 
                 float c = (float)((cell.Value - min) / delta);
-                gridColor = new Color(1 - c, c, c);
+                gridColor = new Color(1 - c, c, 0);
 
                 DrawPoint(cell.Key, gridColor, cellWidth);
                 //spriteBatch.Draw(dummyTexture, pos, new Rectangle(0, 0, (int)cellWidth, (int)cellWidth), gridColor);

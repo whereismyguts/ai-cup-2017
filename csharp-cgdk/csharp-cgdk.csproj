@@ -77,6 +77,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActualUnit.cs" />
+    <Compile Include="Clusterer.cs" />
     <Compile Include="CombatGroup.cs" />
     <Compile Include="Command.cs" />
     <Compile Include="Model\ActionType.cs" />
