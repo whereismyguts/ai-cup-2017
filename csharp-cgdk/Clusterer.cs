@@ -7,9 +7,20 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
     public class Cluster {
         private List<ActualUnit> units = new List<ActualUnit>();
 
-        public double PositionX { get; private set; }
-        public double PositionY { get; private set; }
-        VehicleType ClusterType;
+        public double X { get { return Position.X; } }
+        public double Y { get { return Position.Y; } }
+        public Vector Position { get; internal set; }
+        public int Count { get { return units.Count; } }
+
+        public List<ActualUnit> Units { get { return units; } }
+
+        public VehicleType Border { get; internal set; }
+        public double MaxY { get; private set; }
+        public double MinY { get; private set; }
+        public double MaxX { get; private set; }
+        public double MinX { get; private set; }
+
+        public VehicleType ClusterType;
         public double Radius = 128;
 
         public Cluster (ActualUnit unit) {
@@ -19,40 +30,43 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             Update();
         }
 
+
+
+
         public void Update () {
 
             //ln(x) * 2 + 2
             double x = 0, y = 0;
 
-            double minX = double.MaxValue;
-            double maxX = double.MinValue;
-            double minY = double.MaxValue;
-            double maxY = double.MinValue;
+            MinX = double.MaxValue;
+            MaxX = double.MinValue;
+            MinY = double.MaxValue;
+            MaxY = double.MinValue;
 
             units.ForEach(u => {
-                x += u.Position.X;
-                y += u.Position.Y;
+                if (u.Durability != 0) {
+                    x += u.Position.X;
+                    y += u.Position.Y;
 
-                if (u.Position.X > maxX)
-                    maxX = u.Position.X;
-                if (u.Position.X < minX)
-                    minX = u.Position.X;
+                    if (u.Position.X > MaxX)
+                        MaxX = u.Position.X;
+                    if (u.Position.X < MinX)
+                        MinX = u.Position.X;
 
-                if (u.Position.Y > maxY)
-                    maxY = u.Position.Y;
-                if (u.Position.Y < minY)
-                    minY = u.Position.Y;
-
+                    if (u.Position.Y > MaxY)
+                        MaxY = u.Position.Y;
+                    if (u.Position.Y < MinY)
+                        MinY = u.Position.Y;
+                }
             }
             );
 
 
-            PositionX = minX + (maxX - minX) / 2;
-            PositionY = minY + (maxY - minY) / 2;
+            Position = new Vector(MinX + (MaxX - MinX) / 2, MinY + (MaxY - MinY) / 2);
         }
 
         internal bool IsNear (ActualUnit unit) {
-            return unit.UnitType == ClusterType && unit.Position.DistanceTo(PositionX, PositionY) <= Radius;
+            return unit.UnitType == ClusterType && unit.Position.DistanceTo(X, Y) <= Radius;
         }
 
         internal void Add (ActualUnit unit) {
@@ -63,9 +77,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
     }
 
     internal class Clusterer {
-
         internal static List<Cluster> Clusterize (Dictionary<long, ActualUnit> vehicles) {
-            
             List<Cluster> clusters = new List<Cluster>();
             foreach (ActualUnit unit in vehicles.Values) {
                 bool newCluster = true;
@@ -79,7 +91,6 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                 if (newCluster)
                     clusters.Add(new Cluster(unit));
             }
-
             return clusters;
         }
     }

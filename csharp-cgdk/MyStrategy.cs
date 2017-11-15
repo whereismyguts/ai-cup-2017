@@ -17,9 +17,9 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         Dictionary<long, ActualUnit> vehicles = new Dictionary<long, ActualUnit>();
         Dictionary<long, ActualUnit> enemies = new Dictionary<long, ActualUnit>();
 
-        Commander commander = new Commander();
+        //Commander commander = new Commander();
 
-        List<CombatGroup> groups = new List<CombatGroup>();
+        //List<CombatGroup> groups = new List<CombatGroup>();
         Random rnd = new Random();
 
         float[,] helicsPotentials = new float[8, 8];
@@ -28,41 +28,14 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         public static int CellWidth = 1024 / CellCount;
 
         public void Move (Player me, World world, Game game, Move move) {
-
             InitializeTick(me, world, move);
 
-
-            if (world.TickIndex > 0 && world.TickIndex % 20 == 0) {
-                foreach (var g in groups) {
-                    g.Update(vehicles);
-                    g.Step(enemies, vehicles);
-                }
-                groups.RemoveAll(g => g.Count == 0);
-            }
-            commander.Step();
-            Render.Update(enemies, vehicles, groups);
+            //   if ( world.TickIndex % 2 == 0) {
+            Commander.Step();
+            //    }
         }
 
-        float GetUnitTypeValue (ActualUnit unit) {
-            if (unit.Durability == 0)
-                return 0;
-            if (unit.IsMy) {
-                if (unit.UnitType == VehicleType.Fighter)
-                    return -0.3f;
-                return 0;
-            }
-
-            switch (unit.UnitType) {
-                case VehicleType.Arrv: return 0.001f;
-                case VehicleType.Fighter: return -0.1f;
-                case VehicleType.Helicopter: return -0.1f;
-                case VehicleType.Ifv: return -0.1f;
-                case VehicleType.Tank: return 0.02f;
-                default: return 0;
-            }
-        }
-
-        private void InitializeTick (Player me, World world, Move move) {
+        void InitializeTick (Player me, World world, Move move) {
             if (world.TickIndex == 0) {
                 foreach (Vehicle v in world.NewVehicles)
                     if (v.PlayerId == 1)
@@ -70,34 +43,30 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                     else
                         enemies.Add(v.Id, new ActualUnit(v));
 
-                groups.Add(new HelicoptersGroup(commander, (int)VehicleType.Helicopter, VehicleType.Helicopter));
-                groups.Add(new FightersGroup(commander, (int)VehicleType.Fighter, VehicleType.Fighter));
-                groups.Add(new IfvGroup(commander, (int)VehicleType.Ifv, VehicleType.Ifv));
-                groups.Add(new TankGroup(commander, (int)VehicleType.Tank, VehicleType.Tank));
-                groups.Add(new ArrvGroup(commander, (int)VehicleType.Arrv, VehicleType.Arrv));
+                UpdateUnits(world);
 
+                var friendlyClusters = Clusterer.Clusterize(vehicles);
+                EnemyClusters = Clusterer.Clusterize(enemies);
+                squads.Clear();
+                Calc.ResetIds();
+                friendlyClusters.ForEach(c => squads.Add(new Squad(c)));
+                Commander.Reassign(squads);
                 new System.Threading.Tasks.Task(() => { Render.Run(); }).Start();
             }
-
-            UpdateUnits(world);
-
-
-            if (world.TickIndex % 300 == 0) {
-                clusters = Clusterer.Clusterize(vehicles);
-
-                //foreach (Cluster c in clusters) {
-
-                //}
+            //   var clusters = Clusterer.Clusterize(vehicles);
+            else {
+                UpdateUnits(world);
+                EnemyClusters.ForEach(c => c.Update());
             }
-            else clusters.ForEach(c => c.Update());
-            Render.Update(clusters);
-
-            
-
-            commander.Update(world, move, me, vehicles);
+            squads[0].Step();
+            Commander.Update(world, move, me, squads);
+            Render.Update(enemies, vehicles, squads, EnemyClusters, Commander.Commands);
         }
 
-        List<Cluster> clusters;
+        List<Squad> squads = new List<Squad>();
+
+        public static List<Cluster> EnemyClusters { get; set; }
+        //public static List<Cluster> FriendlyClusters { get; set; }
 
         private void UpdateUnits (World world) {
             if (world.VehicleUpdates.Length > 0) {
@@ -120,5 +89,9 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                 //else
             }
         }
+
+
+
+
     }
 }

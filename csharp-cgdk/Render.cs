@@ -5,40 +5,26 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Linq;
+using Microsoft.Xna.Framework.Input;
 
 namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
     static class Render {
         private static MonoRenderer window;
-
-
-
-
 
         public static void Run () {
             window = new MonoRenderer();
             window.Run();
         }
 
-        internal static void Update (Dictionary<long, ActualUnit> enemies, Dictionary<long, ActualUnit> vehicles, List<CombatGroup> groups) {
+        internal static void Update (Dictionary<long, ActualUnit> enemies, Dictionary<long, ActualUnit> vehicles, List<Squad> squads, List<Cluster> enemyClusters, List<Command> commands) {
             if (window == null)
                 return;
-
             window.Units = vehicles;
             window.Enemies = enemies;
-
-            window.Groups = groups;
-            window.CustomUpdate();
-        }
-        internal static void Update (List<Command> commands) {
-            if (window == null)
-                return;
+            window.Squads = squads;
+            window.EnemyClusters = enemyClusters;
             window.Commands = commands;
-        }
-
-        internal static void Update (List<Cluster> clusters) {
-            if (window == null)
-                return;
-            window.Clusters = clusters;
+            window.CustomUpdate();
         }
     }
 
@@ -49,16 +35,19 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         float cellWidth;
         public MonoRenderer () {
             graphics = new GraphicsDeviceManager(this);
-            graphics.PreferredBackBufferWidth = 300;
-            graphics.PreferredBackBufferHeight = 300;
+            graphics.PreferredBackBufferWidth = 500;
+            graphics.PreferredBackBufferHeight = 500;
             cellWidth = graphics.PreferredBackBufferWidth / 1024f * MyStrategy.CellWidth;
         }
 
         public Dictionary<long, ActualUnit> Enemies { get; internal set; }
-
         public Dictionary<long, ActualUnit> Units { get; internal set; }
-        public List<CombatGroup> Groups { get; internal set; }
-        public List<Cluster> Clusters { get; internal set; }
+        public List<Squad> Squads { get; internal set; }
+        public List<Cluster> EnemyClusters { get; internal set; }
+        internal List<Command> Commands;
+
+
+
 
         protected override void Initialize () {
             base.Initialize();
@@ -74,7 +63,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
 
         Color gridColor = new Color(Color.Black, 2.5f);
-        internal List<Command> Commands;
+
 
         public void CustomUpdate () {
             try {
@@ -91,10 +80,10 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
 
 
-                foreach (var group in Groups) {
-                    //   DrawGrid(group);
-                    DrawLine(VToScreenV2( group.Goal), VToScreenV2(group.Position), 3, Color.Violet);
-                }
+                //foreach (var group in Groups) {
+                //    //   DrawGrid(group);
+                //    DrawLine(VToScreenV2( group.Goal), VToScreenV2(group.Position), 3, Color.Violet);
+                //}
 
                 DrawUnits();
 
@@ -106,21 +95,61 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                 //UpdateInProcess = false;
             }
             catch (Exception e) {
+                spriteBatch.End();
             }
         }
 
         private void DrawClusters () {
-            foreach (var c in Clusters) {
+            //foreach (var c in EnemyClusters) {
+            //    Vector2[] vertex = new Vector2[] {
+            //        VToScreenV2(new Vector(c.X - c.Radius, c.Y - c.Radius)),
+            //        VToScreenV2(new Vector(c.X - c.Radius, c.Y + c.Radius)),
+            //        VToScreenV2(new Vector(c.X + c.Radius, c.Y + c.Radius)),
+            //        VToScreenV2(new Vector(c.X + c.Radius, c.Y - c.Radius)) };
+
+            //    DrawPolygon(vertex, 4, Color.Red);
+            //}
+            foreach (var s in Squads) {
+                if (s.Potentials == null)
+                    continue;
+                    //var c = s.Cluster;
+                    //Vector2[] vertex = new Vector2[] {
+                    //    VToScreenV2(new Vector(c.X - c.Radius, c.Y - c.Radius)),
+                    //    VToScreenV2(new Vector(c.X - c.Radius, c.Y + c.Radius)),
+                    //    VToScreenV2(new Vector(c.X + c.Radius, c.Y + c.Radius)),
+                    //    VToScreenV2(new Vector(c.X + c.Radius, c.Y - c.Radius)) };
+
+                    //DrawPolygon(vertex, 4, Color.Green);
 
 
-                Vector2[] vertex = new Vector2[] {
-                    VToScreenV2(new Vector(c.PositionX - c.Radius, c.PositionY - c.Radius)),
-                    VToScreenV2(new Vector(c.PositionX - c.Radius, c.PositionY + c.Radius)),
-                    VToScreenV2(new Vector(c.PositionX + c.Radius, c.PositionY + c.Radius)),
-                    VToScreenV2(new Vector(c.PositionX + c.Radius, c.PositionY - c.Radius)) };
+                    double max = float.MinValue;
+                double min = float.MaxValue;
 
-                DrawPolygon(vertex, 4, Color.Blue);
+                foreach (var cell in s.Potentials) {
+                    if (cell.Value > max)
+                        max = cell.Value;
+                    else if (cell.Value < min)
+                        min = cell.Value;
+                }
+                double delta = max - min;
+
+               // if (s.Potentials != null)
+                    foreach (var cell in s.Potentials) {
+
+                        float c = (float)((cell.Value - min) / delta);
+                        gridColor = new Color(1 - c, c, 0);
+
+                        DrawPoint(cell.Key, gridColor, cellWidth);
+                        //spriteBatch.Draw(dummyTexture, pos, new Rectangle(0, 0, (int)cellWidth, (int)cellWidth), gridColor);
+                    }
+
+
+
+
+                DrawLine(VToScreenV2(s.Cluster.Position), VToScreenV2(s.Goal), 4, Color.Violet);
             }
+
+
         }
 
         public void DrawPolygon (Vector2[] vertex, int count, Color color) {
@@ -133,9 +162,13 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         }
 
 
-
+        int mouselocktime = 0;
         protected override void Update (GameTime gameTime) {
+
+
             //   base.Update(gameTime);
+
+
         }
 
         private void DrawPoint (Vector point, Color color, float width = 10) {
@@ -196,50 +229,53 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                 (float)v.Y / 1024f * graphics.PreferredBackBufferHeight);
         }
 
-        void DrawCommands () {
-            foreach (var c in Commands) {
-                MoveCommand move = c as MoveCommand;
+        //void DrawCommands () {
+        //    foreach (var c in Commands) {
+        //        MoveCommand move = c as MoveCommand;
 
-                if (move != null) {
-                    var g = Groups.FirstOrDefault(gr => gr.Id == move.GroupId);
-                    if (g != null)
-                        DrawLine(VToScreenV2(g.Position), VToScreenV2(new Vector(g.Position.X + move.X, g.Position.Y + move.Y)), 3, Color.LightGreen);
-                }
-            }
+        //        if (move != null) {
+        //            var g = Groups.FirstOrDefault(gr => gr.Id == move.GroupId);
+        //            if (g != null)
+        //                DrawLine(VToScreenV2(g.Position), VToScreenV2(new Vector(g.Position.X + move.X, g.Position.Y + move.Y)), 3, Color.LightGreen);
+        //        }
+        //    }
 
-        }
-
-
-        private void DrawGrid (CombatGroup group) {
-
-            if (Groups == null)
-                return;
-            double max = float.MinValue;
-            double min = float.MaxValue;
-
-            foreach (var cell in group.Potentials) {
-                if (cell.Value > max)
-                    max = cell.Value;
-                else if (cell.Value < min)
-                    min = cell.Value;
-            }
-            double delta = max - min;
+        //}
 
 
-            foreach (var cell in group.Potentials) {
+        //private void DrawGrid (CombatGroup group) {
 
-                float c = (float)((cell.Value - min) / delta);
-                gridColor = new Color(1 - c, c, 0);
+        //    if (Groups == null)
+        //        return;
+        //    double max = float.MinValue;
+        //    double min = float.MaxValue;
 
-                DrawPoint(cell.Key, gridColor, cellWidth);
-                //spriteBatch.Draw(dummyTexture, pos, new Rectangle(0, 0, (int)cellWidth, (int)cellWidth), gridColor);
-            }
-        }
+        //    foreach (var cell in group.Potentials) {
+        //        if (cell.Value > max)
+        //            max = cell.Value;
+        //        else if (cell.Value < min)
+        //            min = cell.Value;
+        //    }
+        //    double delta = max - min;
+
+
+        //    foreach (var cell in group.Potentials) {
+
+        //        float c = (float)((cell.Value - min) / delta);
+        //        gridColor = new Color(1 - c, c, 0);
+
+        //        DrawPoint(cell.Key, gridColor, cellWidth);
+        //        //spriteBatch.Draw(dummyTexture, pos, new Rectangle(0, 0, (int)cellWidth, (int)cellWidth), gridColor);
+        //    }
+        //}
 
         private void DrawUnits () {
 
-            foreach (var u in Units.Values)
+            foreach (var u in Units.Values) {
                 DrawPoint(u.Position, Color.Black, 5);
+                if (u.IsSelected)
+                    DrawPoint(u.Position, Color.Wheat, 3);
+            }
             foreach (var u in Enemies.Values)
                 DrawPoint(u.Position, Color.DarkRed, 5);
 

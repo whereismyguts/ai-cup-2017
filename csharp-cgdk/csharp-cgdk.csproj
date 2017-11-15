@@ -77,6 +77,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActualUnit.cs" />
+    <Compile Include="Calc.cs" />
     <Compile Include="Clusterer.cs" />
     <Compile Include="CombatGroup.cs" />
     <Compile Include="Command.cs" />
@@ -101,6 +102,7 @@
     <Compile Include="RemoteProcessClient.cs" />
     <Compile Include="Render.cs" />
     <Compile Include="Runner.cs" />
+    <Compile Include="Squad.cs" />
     <Compile Include="Vector.cs" />
   </ItemGroup>
   <ItemGroup>

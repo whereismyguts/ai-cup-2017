@@ -50,6 +50,9 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             Durability = update.Durability;
             Groups = update.Groups;
             IsSelected = update.IsSelected;
+            if (update.IsSelected) {
+
+            }
         }
 
         public override string ToString () {

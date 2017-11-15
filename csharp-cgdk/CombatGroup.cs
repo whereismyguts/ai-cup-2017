@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
+    /*
     public abstract class CombatGroup {
         protected Commander Commander { get; }
         public VehicleType GroupType { get; protected set; }
@@ -18,7 +19,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             Id = id;
             GroupType = type;
             commander.Select(type);
-            commander.Assign(id);
+            commander.CommandAssign(id);
         }
 
         public virtual void Step (Dictionary<long, ActualUnit> enemies, Dictionary<long, ActualUnit> vehicles) {
@@ -112,7 +113,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             Position = Count > 0 ? new Vector(x / Count, y / Count) : new Vector();
 
             if (TimeSinceLastScaling > 30 && (maxX - minX < 150 || maxY - minY < 150)){
-                Commander.Shrink(Id, Position, 0.5);
+                Commander.CommandShrink(Id, Position, 0.5);
                 TimeSinceLastScaling = 0;
             }
 
@@ -220,4 +221,6 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             }
         }
     }
+
+    */
 }

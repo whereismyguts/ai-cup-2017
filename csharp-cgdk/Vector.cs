@@ -52,6 +52,10 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             //var angle = (Math.Atan2(0 - X, Y - (-1)));
             return Math.Abs( angle);
         }
+
+        public override string ToString () {
+            return "[" + X + "; " + Y + ";]";
+        }
     }
 
     public struct IntVector {
@@ -62,6 +66,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
         public int X { get; set; }
         public int Y { get; set; }
+        public Vector Vector { get { return new Vector(X, Y); } }
 
         public static IntVector operator + (IntVector p1, IntVector p2) {
             return new IntVector(p1.X + p2.X, p1.Y + p2.Y);
