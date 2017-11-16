@@ -51,7 +51,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                 Calc.ResetIds();
                 friendlyClusters.ForEach(c => squads.Add(new Squad(c, friendlyClusters)));
                 Commander.Reassign(squads);
-                new System.Threading.Tasks.Task(() => { Render.Run(); }).Start();
+              //  new System.Threading.Tasks.Task(() => { Render.Run(); }).Start();
             }
             //   var clusters = Clusterer.Clusterize(vehicles);
             else {
@@ -61,10 +61,13 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             squads.RemoveAll(s => s.Cluster.Count == 0);
             squads.ForEach(s=>s.Step());
             Commander.Update(world, move, me, squads);
-            Render.Update(enemies, vehicles, squads, EnemyClusters, Commander.Commands);
+           // Render.Update(enemies, vehicles, squads, EnemyClusters, Commander.Commands);
 
             if(world.TickIndex%200==0 && world.TickIndex>0)
                 EnemyClusters = Clusterer.Clusterize(enemies);
+
+
+            //Nuclear.Step(squads, EnemyClusters);
         }
 
         List<Squad> squads = new List<Squad>();

@@ -49,7 +49,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             cluster.Update();
             Cluster target = FindTarget();
             //bool enemyNear = false;
-            if (target != null) {
+            if (cluster.ClusterType != VehicleType.Arrv) {
                 Dictionary<IntVector, double> potentials = new Dictionary<IntVector, double>();
 
 
@@ -73,6 +73,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
                         bool enemyNear = false;
                         double cellDistToEnemyValue = 0;
+
 
                         foreach (var e in Enemies)
                             if (e != target) {
@@ -112,7 +113,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
                         //      cellDistToEnemyValue /= Enemies.Count - 1;
 
-                        var cellTargetValue = (1500 - Calc.Distance(target.Position, x, y))*1.5;
+                        var cellTargetValue = target == null ? 0 : (1500 - Calc.Distance(target.Position, x, y)) * 1.5;
 
                         //   if (potentials.ContainsKey(cell))
                         //      potentials[cell] += (cellDistToEnemyValue + cellTargetValue) ;
@@ -123,20 +124,16 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                 }
 
                 //enemyNear = true;
-                Goal = potentials.Count > 0 ? potentials.OrderBy(p => p.Value).Last().Key.Vector : target.Position;
+                Goal = potentials.Count > 0 ? potentials.OrderBy(p => p.Value).Last().Key.Vector : target!=null? target.Position : FollowFriend();
                 Potentials = potentials;
             }
             else {
-                double minDist = double.MaxValue;
-                foreach (var f in friends) {
-                    if (f!=cluster && Calc.Distance(f.Position, Position) < minDist) {
-                        minDist = Calc.Distance(f.Position, Position);
-                        Goal = f.Position;
-                    }
-                }
+
+                Goal = FollowFriend();
+
             }
 
-            if (sinceLastShrink > 100 && Math.Max(cluster.MaxX - cluster.MinX, cluster.MaxY - cluster.MinY) > 150) {
+            if (sinceLastShrink > 100 && Math.Max(cluster.MaxX - cluster.MinX, cluster.MaxY - cluster.MinY) > 100) {
                 Commander.CommandShrink(this);
                 sinceLastShrink = 0;
             }
@@ -144,6 +141,19 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             Commander.CommandMove(this); // TODO send vector
 
         }
+
+        private Vector FollowFriend () {
+            Vector goal = new Vector(512,512);
+            double minDist = double.MaxValue;
+            foreach (var f in friends) {
+                if (f != cluster && Calc.Distance(f.Position, Position) < minDist) {
+                    minDist = Calc.Distance(f.Position, Position);
+                    goal = f.Position;
+                }
+            }
+            return goal;
+        }
+
         int sinceLastShrink = 0;
 
         private Cluster FindTarget () {
@@ -154,21 +164,23 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             double maxValue = 0;
             int index = -1;
             for (int i = 0; i < Enemies.Count; i++)
-                if(Enemies[i].Count>0)
-                {
-                var value = (1 / Calc.Distance(Enemies[i].Position, Position) + (Enemies[i].Count <= cluster.Count ? 1 : 0)) + 10 * AttackValue(Enemies[i]);
-                if (value > maxValue) {
-                    index = i;
-                    maxValue = value;
+                if (Enemies[i].Count > 0) {
+                    var attackValue = AttackValue(Enemies[i]);
+                    if (attackValue == 0)
+                        continue;
+                    var value = (1 / Calc.Distance(Enemies[i].Position, Position) + (Enemies[i].Count <= cluster.Count ? 1 : 0)) + 10 * attackValue;
+                    if (value > maxValue) {
+                        index = i;
+                        maxValue = value;
+                    }
                 }
-            }
-            return index >-1 ? Enemies[index] :null;
+            return index > -1 ? Enemies[index] : null;
         }
 
         List<VehicleType> fTarget = new List<VehicleType>() { VehicleType.Helicopter, VehicleType.Fighter };
         List<VehicleType> hTarget = new List<VehicleType>() { VehicleType.Tank, VehicleType.Arrv };
         List<VehicleType> iTarget = new List<VehicleType>() { VehicleType.Fighter, VehicleType.Helicopter, VehicleType.Arrv, VehicleType.Ifv, VehicleType.Tank };
-        List<VehicleType> tTarget = new List<VehicleType>() { VehicleType.Tank, VehicleType.Ifv, VehicleType.Ifv, VehicleType.Helicopter, VehicleType.Fighter };
+        List<VehicleType> tTarget = new List<VehicleType>() { VehicleType.Tank, VehicleType.Ifv, VehicleType.Arrv, VehicleType.Helicopter, VehicleType.Fighter };
 
         private int AttackValue (Cluster e) {
             List<VehicleType> targetRule =
@@ -178,7 +190,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             cluster.ClusterType == VehicleType.Tank ? tTarget : new List<VehicleType>();
 
             if (targetRule.Contains(e.ClusterType))
-                return 5-targetRule.IndexOf(e.ClusterType);
+                return 5 - targetRule.IndexOf(e.ClusterType);
             return 0;
         }
     }
