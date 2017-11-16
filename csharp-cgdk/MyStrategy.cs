@@ -49,7 +49,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                 EnemyClusters = Clusterer.Clusterize(enemies);
                 squads.Clear();
                 Calc.ResetIds();
-                friendlyClusters.ForEach(c => squads.Add(new Squad(c)));
+                friendlyClusters.ForEach(c => squads.Add(new Squad(c, friendlyClusters)));
                 Commander.Reassign(squads);
                 new System.Threading.Tasks.Task(() => { Render.Run(); }).Start();
             }
@@ -58,9 +58,13 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                 UpdateUnits(world);
                 EnemyClusters.ForEach(c => c.Update());
             }
-            squads[0].Step();
+            squads.RemoveAll(s => s.Cluster.Count == 0);
+            squads.ForEach(s=>s.Step());
             Commander.Update(world, move, me, squads);
             Render.Update(enemies, vehicles, squads, EnemyClusters, Commander.Commands);
+
+            if(world.TickIndex%200==0 && world.TickIndex>0)
+                EnemyClusters = Clusterer.Clusterize(enemies);
         }
 
         List<Squad> squads = new List<Squad>();
@@ -72,14 +76,14 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             if (world.VehicleUpdates.Length > 0) {
                 foreach (var update in world.VehicleUpdates) {
 
-                    if (update.Durability == 0) {
-                        if (vehicles.ContainsKey(update.Id))
-                            vehicles.Remove(update.Id);
-                        else
-                                if (enemies.ContainsKey(update.Id))
-                            enemies.Remove(update.Id);
-                        continue;
-                    }
+                    //if (update.Durability == 0) {
+                    //    if (vehicles.ContainsKey(update.Id))
+                    //        vehicles.Remove(update.Id);
+                    //    else
+                    //            if (enemies.ContainsKey(update.Id))
+                    //        enemies.Remove(update.Id);
+                    //    continue;
+                    //}
                     if (vehicles.ContainsKey(update.Id))
                         vehicles[update.Id].Update(update);
                     else

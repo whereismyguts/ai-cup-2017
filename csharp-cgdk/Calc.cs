@@ -21,6 +21,12 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             var p2 = new Vector(x2, y2);
             return Distance(p1, p2);
         }
+
+        internal static double Distance (int x1, int y1, int x2, int y2) {
+            var p2 = new Vector(x2, y2);
+            var p1 = new Vector(x1, y1);
+            return Distance(p1, p2);
+        }
         static HashSet<int> ids = new HashSet<int>();
         internal static int ClaimId () {
             int i = 1;

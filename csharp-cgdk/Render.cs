@@ -110,7 +110,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             //    DrawPolygon(vertex, 4, Color.Red);
             //}
             foreach (var s in Squads) {
-                if (s.Potentials == null)
+                if (s.Cluster.ClusterType!= Model.VehicleType.Tank || s.Potentials == null)
                     continue;
                     //var c = s.Cluster;
                     //Vector2[] vertex = new Vector2[] {

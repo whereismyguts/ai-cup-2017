@@ -18,9 +18,10 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         }
 
         // -- constants --
-        float maxEnemyDistance = 350;
-        int potentialCellCount = 8;
-        float potentialRadius = 100;
+        float maxEnemyDistance = 200;
+        int potentialCellCount = 16;
+        float potentialRadius = 200;
+        float maxFriendDistance = 100;
         //---
 
         private Cluster cluster;
@@ -33,68 +34,107 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
         public Vector Goal { get; private set; }
         List<Cluster> Enemies { get { return MyStrategy.EnemyClusters; } }
+        List<Cluster> friends;
 
         public Dictionary<IntVector, double> Potentials { get; private set; }
 
-        public Squad (Cluster c) {
+        public Squad (Cluster c, List<Cluster> friends) {
+            this.friends = friends;
             cluster = c;
             Id = Calc.ClaimId();
         }
 
         internal void Step () {
+
             cluster.Update();
             Cluster target = FindTarget();
-            bool enemyNear = false;
-
-            Dictionary<IntVector, double> potentials = new Dictionary<IntVector, double>();
-
-            double theta = -Math.PI;
-            double step = Math.PI * 2 / potentialCellCount;
+            //bool enemyNear = false;
+            if (target != null) {
+                Dictionary<IntVector, double> potentials = new Dictionary<IntVector, double>();
 
 
-            while (theta < Math.PI) {
-                int x = (int)(Position.X + potentialRadius * Math.Cos(theta));
-                int y = (int)(Position.Y + potentialRadius * Math.Sin(theta));
 
-                theta += step;
+                int count = potentialCellCount;
 
-                if (x < 0 || y < 0 || x >= 1024 || y >= 1024)
-                    continue;
+                for (double r = potentialRadius; r > 0; r -= potentialRadius / 2) {
+                    double theta = -Math.PI;
+                    double step = Math.PI * 2 / count;
 
-                var cell = new IntVector(x, y);
+                    while (theta < Math.PI) {
+                        int x = (int)(Position.X + r * Math.Cos(theta));
+                        int y = (int)(Position.Y + r * Math.Sin(theta));
 
+                        theta += step;
 
-                double cellDistToEnemyValue = 0;
-
-                foreach (var e in Enemies)
-                    if (e != target) {
-                        double distanceToEnemy = Calc.Distance(e.Position, Position);
-                        if (distanceToEnemy > maxEnemyDistance)
+                        if (x < 0 || y < 0 || x >= 1024 || y >= 1024)
                             continue;
 
-                        bool avoid = Calc.ShouldAvoid(cluster, e);
+                        var cell = new IntVector(x, y);
 
-                        cellDistToEnemyValue += avoid ? Calc.Distance(e.Position, x, y) : 0;
+                        bool enemyNear = false;
+                        double cellDistToEnemyValue = 0;
 
-                        enemyNear = true;
+                        foreach (var e in Enemies)
+                            if (e != target) {
+                                double distanceToEnemy = Calc.Distance(e.Position, Position);
+                                if (distanceToEnemy > maxEnemyDistance)
+                                    continue;
+
+                                bool avoid = Calc.ShouldAvoid(cluster, e);
+
+                                cellDistToEnemyValue += avoid ? Calc.Distance(e.Position, x, y) : 0;
+
+                                enemyNear = true;
+                            }
+
+                        if (!enemyNear)
+                            foreach (var f in friends)
+                                if (f != cluster) {
+                                    double distanceToFriend = Calc.Distance(f.Position, Position);
+                                    if (distanceToFriend > maxFriendDistance)
+                                        continue;
+
+                                    cellDistToEnemyValue += Calc.Distance(f.Position, x, y);
+                                }
+
+                        for (int i = 0; i <= 1024; i += 256)
+                            for (int j = 0; j <= 1024; j += 256)
+                                if (i == 0 || j == 0 || i == 1024 || j == 1024) {
+                                    var d = Calc.Distance(x, y, i, j);
+                                    if (d < 300)
+                                        cellDistToEnemyValue += Calc.Distance(x, y, i, j) / 10;
+
+                                }
+
+
+                        //if (cellDistToEnemyValue == 0)
+                        //    continue;
+
+                        //      cellDistToEnemyValue /= Enemies.Count - 1;
+
+                        var cellTargetValue = (1500 - Calc.Distance(target.Position, x, y))*1.5;
+
+                        //   if (potentials.ContainsKey(cell))
+                        //      potentials[cell] += (cellDistToEnemyValue + cellTargetValue) ;
+                        //                else 
+                        potentials[cell] = cellDistToEnemyValue + cellTargetValue;
                     }
-                if (cellDistToEnemyValue == 0)
-                    continue;
+                    count /= 2;
+                }
 
-                //      cellDistToEnemyValue /= Enemies.Count - 1;
-
-                var cellTargetValue = 1024 - Calc.Distance(target.Position, x, y);
-
-                if (potentials.ContainsKey(cell))
-                    potentials[cell] += (cellDistToEnemyValue + cellTargetValue) / 2;
-                else potentials[cell] = (cellDistToEnemyValue + cellTargetValue) / 2;
+                //enemyNear = true;
+                Goal = potentials.Count > 0 ? potentials.OrderBy(p => p.Value).Last().Key.Vector : target.Position;
+                Potentials = potentials;
             }
-
-            //enemyNear = true;
-            Goal = potentials.Count > 0 ? potentials.OrderBy(p => p.Value).Last().Key.Vector : target.Position;
-            Potentials = potentials;
-
-
+            else {
+                double minDist = double.MaxValue;
+                foreach (var f in friends) {
+                    if (f!=cluster && Calc.Distance(f.Position, Position) < minDist) {
+                        minDist = Calc.Distance(f.Position, Position);
+                        Goal = f.Position;
+                    }
+                }
+            }
 
             if (sinceLastShrink > 100 && Math.Max(cluster.MaxX - cluster.MinX, cluster.MaxY - cluster.MinY) > 150) {
                 Commander.CommandShrink(this);
@@ -107,9 +147,39 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         int sinceLastShrink = 0;
 
         private Cluster FindTarget () {
-            return Enemies.FirstOrDefault(e => e.ClusterType == TargetRules(cluster.ClusterType)) ?? Enemies[0];
+
+            if (cluster.ClusterType == VehicleType.Arrv)
+                return null;
+
+            double maxValue = 0;
+            int index = -1;
+            for (int i = 0; i < Enemies.Count; i++)
+                if(Enemies[i].Count>0)
+                {
+                var value = (1 / Calc.Distance(Enemies[i].Position, Position) + (Enemies[i].Count <= cluster.Count ? 1 : 0)) + 10 * AttackValue(Enemies[i]);
+                if (value > maxValue) {
+                    index = i;
+                    maxValue = value;
+                }
+            }
+            return index >-1 ? Enemies[index] :null;
+        }
+
+        List<VehicleType> fTarget = new List<VehicleType>() { VehicleType.Helicopter, VehicleType.Fighter };
+        List<VehicleType> hTarget = new List<VehicleType>() { VehicleType.Tank, VehicleType.Arrv };
+        List<VehicleType> iTarget = new List<VehicleType>() { VehicleType.Fighter, VehicleType.Helicopter, VehicleType.Arrv, VehicleType.Ifv, VehicleType.Tank };
+        List<VehicleType> tTarget = new List<VehicleType>() { VehicleType.Tank, VehicleType.Ifv, VehicleType.Ifv, VehicleType.Helicopter, VehicleType.Fighter };
+
+        private int AttackValue (Cluster e) {
+            List<VehicleType> targetRule =
+            cluster.ClusterType == VehicleType.Fighter ? fTarget :
+            cluster.ClusterType == VehicleType.Helicopter ? hTarget :
+            cluster.ClusterType == VehicleType.Ifv ? iTarget :
+            cluster.ClusterType == VehicleType.Tank ? tTarget : new List<VehicleType>();
+
+            if (targetRule.Contains(e.ClusterType))
+                return 5-targetRule.IndexOf(e.ClusterType);
+            return 0;
         }
     }
-
-
 }

@@ -31,8 +31,6 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                 ExecuteNextCommand();
 
             }
-
-
         }
 
         static void ExecuteNextCommand () {
@@ -56,6 +54,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
             SelectMoveCommand selMoveCommand = (SelectMoveCommand)commands.FirstOrDefault(
                 c => c.Squad != null && c.Squad.Id == squad.Id && c is SelectMoveCommand);
+
             if (selMoveCommand == null)
                 commands.Add(new SelectMoveCommand(squad));
         }
@@ -142,7 +141,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         }
 
         public override void Execute (Move move) {
-            move.Factor = 0.3;
+            move.Factor = 0.1;
             move.X = Squad.Cluster.Position.X;
             move.Y = Squad.Cluster.Position.Y;
             move.Action = ActionType.Scale;
@@ -163,6 +162,11 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         }
 
         public override void Execute (Move move) {
+            if (Squad.Cluster.Count == 0) {
+                CanRemove = true;
+                return;
+            }
+
             if (Squad.IsSelected) {
                 move.Action = ActionType.Move;
                 move.X = Squad.Goal.X - Squad.Cluster.Position.X;
