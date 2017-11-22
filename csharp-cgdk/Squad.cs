@@ -24,7 +24,8 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         float maxFriendDistance = 100;
         //---
 
-        private Cluster cluster;
+
+        Cluster cluster;
         Vector Position { get { return cluster.Position; } }
 
         public int Id { get; private set; }
@@ -45,14 +46,12 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         }
 
         internal void Step () {
-
             cluster.Update();
+            if ((cluster.ClusterType == VehicleType.Fighter || cluster.ClusterType == VehicleType.Helicopter) && MyStrategy.World.TickIndex < 500)
+                return;
             Cluster target = FindTarget();
-            //bool enemyNear = false;
             if (cluster.ClusterType != VehicleType.Arrv) {
                 Dictionary<IntVector, double> potentials = new Dictionary<IntVector, double>();
-
-
 
                 int count = potentialCellCount;
 
@@ -74,6 +73,11 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                         bool enemyNear = false;
                         double cellDistToEnemyValue = 0;
 
+                        if (MyStrategy.EnemyPlayer.NextNuclearStrikeX > -1) {
+                            double distanceToNuke = Calc.Distance(MyStrategy.EnemyPlayer.NextNuclearStrikeX, MyStrategy.EnemyPlayer.NextNuclearStrikeY, x, y);
+                            if (distanceToNuke <= 1.5 * MyStrategy.Game.TacticalNuclearStrikeRadius)
+                                cellDistToEnemyValue += 10 * distanceToNuke;
+                        }
 
                         foreach (var e in Enemies)
                             if (e != target) {
@@ -107,24 +111,12 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
                                 }
 
-
-                        //if (cellDistToEnemyValue == 0)
-                        //    continue;
-
-                        //      cellDistToEnemyValue /= Enemies.Count - 1;
-
                         var cellTargetValue = target == null ? 0 : (1500 - Calc.Distance(target.Position, x, y)) * 1.5;
-
-                        //   if (potentials.ContainsKey(cell))
-                        //      potentials[cell] += (cellDistToEnemyValue + cellTargetValue) ;
-                        //                else 
                         potentials[cell] = cellDistToEnemyValue + cellTargetValue;
                     }
                     count /= 2;
                 }
-
-                //enemyNear = true;
-                Goal = potentials.Count > 0 ? potentials.OrderBy(p => p.Value).Last().Key.Vector : target!=null? target.Position : FollowFriend();
+                Goal = potentials.Count > 0 ? potentials.OrderBy(p => p.Value).Last().Key.Vector : target != null ? target.Position : FollowFriend();
                 Potentials = potentials;
             }
             else {
@@ -143,7 +135,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         }
 
         private Vector FollowFriend () {
-            Vector goal = new Vector(512,512);
+            Vector goal = new Vector(512, 512);
             double minDist = double.MaxValue;
             foreach (var f in friends) {
                 if (f != cluster && Calc.Distance(f.Position, Position) < minDist) {
@@ -151,7 +143,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                     goal = f.Position;
                 }
             }
-            return goal;
+            return goal + (Position - goal).SetLength(10);
         }
 
         int sinceLastShrink = 0;

@@ -7,12 +7,24 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             Y = y;
         }
 
+
+        public static Vector operator * (Vector p1, double a) {
+            return new Vector(p1.X * a, p1.Y * a);
+        }
+
         public static Vector operator / (Vector p1, float a) {
+            return new Vector(p1.X / a, p1.Y / a);
+        }
+        public static Vector operator / (Vector p1, double a) {
             return new Vector(p1.X / a, p1.Y / a);
         }
 
         public static Vector operator + (Vector p1, Vector p2) {
             return new Vector(p1.X + p2.X, p1.Y + p2.Y);
+        }
+
+        public static Vector operator - (Vector p1, Vector p2) {
+            return new Vector(p1.X - p2.X, p1.Y - p2.Y);
         }
 
         public IntVector IntVector { get { return new IntVector((int)X, (int)Y); } }
@@ -55,6 +67,18 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
         public override string ToString () {
             return "[" + X + "; " + Y + ";]";
+        }
+
+        internal Vector SetLength (double v) {
+            return this.Normalize() * v;
+        }
+
+        public Vector Normalize () {
+            return this / this.Length();
+        }
+
+        public double Length () {
+            return DistanceTo(0, 0);
         }
     }
 

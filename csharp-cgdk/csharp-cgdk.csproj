@@ -79,7 +79,6 @@
     <Compile Include="ActualUnit.cs" />
     <Compile Include="Calc.cs" />
     <Compile Include="Clusterer.cs" />
-    <Compile Include="CombatGroup.cs" />
     <Compile Include="Command.cs" />
     <Compile Include="Model\ActionType.cs" />
     <Compile Include="Model\CircularUnit.cs" />

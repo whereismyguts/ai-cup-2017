@@ -12,12 +12,12 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         public int[] Groups { get; set; }
 
         public long Id { get; }
-        //public Vector Position { get; set; }
         public bool IsSelected { get; set; } = false;
-        //public double Y { get { return Position.X; } }
-        //public double X { get; private set; }
-        public bool IsMy { get; }
-        public double VisionRange { get; }
+
+        public double VisionRange { get; private set; }
+        double visionRange;
+        double visionFactor = 1;
+
         public double AerialAtackRange { get; }
         public double GroundAttackRange { get; }
         public Vector Position { get; internal set; }
@@ -31,28 +31,29 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             }
         }
 
-        //public double VisionRange { get; }
+        public long PlayerId { get; private set; }
 
         public ActualUnit (Vehicle newVehicle) {
             UnitType = newVehicle.Type;
             Durability = newVehicle.Durability;
             Id = newVehicle.Id;
             Position = new Vector(newVehicle.X, newVehicle.Y);
-            VisionRange = newVehicle.VisionRange;
+            visionRange = newVehicle.VisionRange;
             AerialAtackRange = newVehicle.AerialAttackRange;
             GroundAttackRange = newVehicle.GroundAttackRange;
-            IsMy = newVehicle.PlayerId == 1;
+            PlayerId = newVehicle.PlayerId;
             Groups = new int[] { };
         }
 
         internal void Update (VehicleUpdate update) {
+            if (Position.X != update.X && Position.Y != update.Y) {
+                visionFactor = MyStrategy.TerranTypes[MyStrategy.Terrains[(int)update.X/32][(int)update.Y/32]];
+                VisionRange = visionRange * visionFactor;
+            }
             Position = new Vector(update.X, update.Y);
             Durability = update.Durability;
             Groups = update.Groups;
             IsSelected = update.IsSelected;
-            if (update.IsSelected) {
-
-            }
         }
 
         public override string ToString () {

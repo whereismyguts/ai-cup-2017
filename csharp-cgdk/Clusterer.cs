@@ -5,6 +5,7 @@ using System.Linq;
 
 namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
     public class Cluster {
+        static int id = 1;
         private List<ActualUnit> units = new List<ActualUnit>();
 
         public double X { get { return Position.X; } }
@@ -14,11 +15,11 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
         public List<ActualUnit> Units { get { return units; } }
 
-        public VehicleType Border { get; internal set; }
         public double MaxY { get; private set; }
         public double MinY { get; private set; }
         public double MaxX { get; private set; }
         public double MinX { get; private set; }
+        public int Id { get; internal set; }
 
         public VehicleType ClusterType;
         public double Radius = 128;
@@ -26,6 +27,8 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         public Cluster (ActualUnit unit) {
             ClusterType = unit.UnitType;
             units.Add(unit);
+            Id = id;
+            id++;
             // Clip = new Clip(unit.Position.X, unit.Position.Y);
             Update();
         }
@@ -61,8 +64,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                         MinY = u.Position.Y;
                     count++;
                 }
-            }
-            );
+            });
 
 
             Position = new Vector(MinX + (MaxX - MinX) / 2, MinY + (MaxY - MinY) / 2);
@@ -81,21 +83,21 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
     internal class Clusterer {
         internal static List<Cluster> Clusterize (Dictionary<long, ActualUnit> vehicles) {
+            Nuclear.ClearInfo();
             List<Cluster> clusters = new List<Cluster>();
-            foreach (ActualUnit unit in vehicles.Values) 
-                if(unit.Durability>0)
-                {
-                bool newCluster = true;
-                foreach (var c in clusters)
-                    if (c.IsNear(unit)) {
-                        c.Add(unit);
-                        newCluster = false;
-                        break;
-                    }
+            foreach (ActualUnit unit in vehicles.Values)
+                if (unit.Durability > 0) {
+                    bool newCluster = true;
+                    foreach (var c in clusters)
+                        if (c.IsNear(unit)) {
+                            c.Add(unit);
+                            newCluster = false;
+                            break;
+                        }
 
-                if (newCluster)
-                    clusters.Add(new Cluster(unit));
-            }
+                    if (newCluster)
+                        clusters.Add(new Cluster(unit));
+                }
             return clusters;
         }
     }

@@ -27,23 +27,30 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         public const int CellCount = 16;
         public static int CellWidth = 1024 / CellCount;
 
-        public void Move (Player me, World world, Game game, Move move) {
-            InitializeTick(me, world, move);
 
-            //   if ( world.TickIndex % 2 == 0) {
+        public static Player EnemyPlayer;
+        public void Move (Player me, World world, Game game, Move move) {
+            World = world;
+            Game = game;
+            EnemyPlayer = world.Players.First(p => !p.IsMe);
+            InitializeTick(me, move);
             Commander.Step();
-            //    }
         }
 
-        void InitializeTick (Player me, World world, Move move) {
-            if (world.TickIndex == 0) {
-                foreach (Vehicle v in world.NewVehicles)
-                    if (v.PlayerId == 1)
+        void InitializeTick (Player me,  Move move) {
+            if (World.TickIndex == 0) {
+                TerranTypes = new Dictionary<TerrainType, double>();
+                TerranTypes.Add(TerrainType.Forest, Game.ForestTerrainVisionFactor);
+                TerranTypes.Add(TerrainType.Plain, Game.PlainTerrainVisionFactor);
+                TerranTypes.Add(TerrainType.Swamp, Game.SwampTerrainVisionFactor);
+
+                foreach (Vehicle v in World.NewVehicles)
+                    if (v.PlayerId == me.Id)
                         vehicles.Add(v.Id, new ActualUnit(v));
                     else
                         enemies.Add(v.Id, new ActualUnit(v));
 
-                UpdateUnits(world);
+                UpdateUnits(World);
 
                 var friendlyClusters = Clusterer.Clusterize(vehicles);
                 EnemyClusters = Clusterer.Clusterize(enemies);
@@ -51,31 +58,32 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                 Calc.ResetIds();
                 friendlyClusters.ForEach(c => squads.Add(new Squad(c, friendlyClusters)));
                 Commander.Reassign(squads);
-              //  new System.Threading.Tasks.Task(() => { Render.Run(); }).Start();
             }
-            //   var clusters = Clusterer.Clusterize(vehicles);
             else {
-                UpdateUnits(world);
+                UpdateUnits(World);
                 EnemyClusters.ForEach(c => c.Update());
             }
             squads.RemoveAll(s => s.Cluster.Count == 0);
-            squads.ForEach(s=>s.Step());
-            Commander.Update(world, move, me, squads);
-           // Render.Update(enemies, vehicles, squads, EnemyClusters, Commander.Commands);
+            squads.ForEach(s => s.Step());
+            Commander.Update(World, move, me, squads);
+            // Render.Update(enemies, vehicles, squads, EnemyClusters, Commander.Commands);
 
-            if(world.TickIndex%200==0 && world.TickIndex>0)
+            if (World.TickIndex % 200 == 0 && World.TickIndex > 0)
                 EnemyClusters = Clusterer.Clusterize(enemies);
 
-
-            //Nuclear.Step(squads, EnemyClusters);
+            Nuclear.Step(move, World, me, Game, squads, EnemyClusters);
         }
 
         List<Squad> squads = new List<Squad>();
 
         public static List<Cluster> EnemyClusters { get; set; }
-        //public static List<Cluster> FriendlyClusters { get; set; }
+        public static TerrainType[][] Terrains { get; private set; }
+        public static Dictionary<TerrainType, double> TerranTypes { get; private set; }
+        public static World World { get; private set; }
+        public static Game Game { get; private set; }
 
         private void UpdateUnits (World world) {
+            Terrains = world.TerrainByCellXY;
             if (world.VehicleUpdates.Length > 0) {
                 foreach (var update in world.VehicleUpdates) {
 
@@ -93,12 +101,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
                     if (enemies.ContainsKey(update.Id))
                         enemies[update.Id].Update(update);
                 }
-                //else
             }
         }
-
-
-
-
     }
 }

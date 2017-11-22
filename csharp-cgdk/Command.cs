@@ -34,6 +34,12 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         }
 
         static void ExecuteNextCommand () {
+            if (Strike != null) {
+                Strike.Execute(Move);
+                if (Strike.CanRemove)
+                    Strike = null;
+                return;
+            }
             if (commands.Count > 0) {
                 commands[0].Execute(Move);
                 if (commands[0].CanRemove)
@@ -90,6 +96,22 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
             first = false;
         }
 
+        internal static void Free (ActualUnit overseer) {
+            if (Commands.FirstOrDefault(c => c is DismissOneCommand) == null)
+                Commands.Add(new DismissOneCommand(overseer));
+        }
+
+        static StrikeCommand Strike = null;
+        internal static void CommandStrike (Cluster target, ActualUnit overseer) {
+            if (Strike == null)
+                Strike = (new StrikeCommand(target, overseer));
+            else {
+                Strike.Cooldown = Me.RemainingNuclearStrikeCooldownTicks;
+                Strike.Target = target;
+                Strike.Overseer = overseer;
+            }
+        }
+
         private static void CommandResetGrouping () {
             commands.Add(new SelectAllCommand());
             commands.Add(new DismissCommand());
@@ -100,6 +122,34 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         }
 
 
+    }
+
+    class DismissOneCommand: Command {
+        public ActualUnit Unit;
+        public DismissOneCommand (ActualUnit unit) : base(null) {
+            Unit = unit;
+            CanRemove = false;
+        }
+
+        public override void Execute (Move move) {
+            if (Unit != null)
+                if (Unit.Groups.Length > 0) {
+                    if (Unit.IsSelected) {
+                        move.Action = ActionType.Dismiss;
+                        move.Group = Unit.Groups[0];
+                        CanRemove = true;
+                        return;
+                    }
+                    else {
+                        move.Action = ActionType.ClearAndSelect;
+                        move.Top = Unit.Position.Y - 2;
+                        move.Left = Unit.Position.X - 2;
+                        move.Right = Unit.Position.X + 2;
+                        move.Bottom = Unit.Position.Y + 2;
+                        return;
+                    }
+                }
+        }
     }
 
     internal class DismissCommand: Command {
@@ -136,15 +186,70 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         public abstract void Execute (Move move);
     }
 
-    class ShrinkCommand: Command {
-        public ShrinkCommand (Squad squad) : base(squad) {
+    class StrikeCommand: Command {
+        public int Cooldown { get; internal set; }
+        internal Cluster Target { get; set; }
+        public ActualUnit Overseer { get; internal set; }
+
+        public StrikeCommand (Cluster target, ActualUnit overseer) : base(null) {
+            Target = target;
+            Overseer = overseer;
+            CanRemove = false;
         }
 
         public override void Execute (Move move) {
-            move.Factor = 0.1;
-            move.X = Squad.Cluster.Position.X;
-            move.Y = Squad.Cluster.Position.Y;
-            move.Action = ActionType.Scale;
+            if (Overseer.Durability == 0) {
+                CanRemove = true;
+                return;
+            }
+
+            if (Target.Count > 0 && Overseer != null && Cooldown == 0) {
+                if (Overseer.Position.DistanceTo(Target.X, Target.Y) >= 120 * 0.6) {
+                    if (Overseer.IsSelected) {
+                        move.Action = ActionType.Move;
+                        move.X = Target.X - Overseer.Position.X; move.Y = Target.Y - Overseer.Position.Y;
+                    }
+                    else {
+                        move.Action = ActionType.ClearAndSelect;
+                        move.Top = Overseer.Position.Y - 2;
+                        move.Left = Overseer.Position.X - 2;
+                        move.Right = Overseer.Position.X + 2;
+                        move.Bottom = Overseer.Position.Y + 2;
+                    }
+                }
+                else {
+                    move.Action = ActionType.TacticalNuclearStrike;
+                    move.X = Target.X;
+                    move.Y = Target.Y;
+                    move.VehicleId = Overseer.Id;
+                    CanRemove = true;
+                }
+            }
+        }
+    }
+
+    class ShrinkCommand: Command {
+        bool Scaled { get { return Squad.Cluster.MaxX - Squad.Cluster.MinX < 50 && Squad.Cluster.MaxY - Squad.Cluster.MinY < 50; } }
+        int scaleTryes = 0;
+        public ShrinkCommand (Squad squad) : base(squad) {
+            CanRemove = false;
+        }
+
+        public override void Execute (Move move) {
+            if (!Scaled && scaleTryes < 5) {
+                move.Factor = 0.1;
+                move.X = Squad.Cluster.Position.X;
+                move.Y = Squad.Cluster.Position.Y;
+                move.Action = ActionType.Scale;
+                scaleTryes++;
+            }
+            else {
+                move.Angle = Math.PI;
+                move.X = Squad.Cluster.Position.X;
+                move.Y = Squad.Cluster.Position.Y;
+                move.Action = ActionType.Rotate;
+                CanRemove = true;
+            }
         }
     }
     class AssignCommand: Command {
