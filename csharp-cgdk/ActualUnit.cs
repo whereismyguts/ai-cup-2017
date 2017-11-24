@@ -32,6 +32,18 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
         }
 
         public long PlayerId { get; private set; }
+        public double MainAttackRange {
+            get {
+                switch (UnitType) {
+                    case VehicleType.Fighter: return AerialAtackRange;
+                    case VehicleType.Helicopter: return GroundAttackRange;
+                    case VehicleType.Ifv: return AerialAtackRange;
+                    case VehicleType.Tank: return GroundAttackRange;
+                    default: return 0;
+
+                }
+            }
+        }
 
         public ActualUnit (Vehicle newVehicle) {
             UnitType = newVehicle.Type;
@@ -47,7 +59,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk {
 
         internal void Update (VehicleUpdate update) {
             if (Position.X != update.X && Position.Y != update.Y) {
-                visionFactor = MyStrategy.TerranTypes[MyStrategy.Terrains[(int)update.X/32][(int)update.Y/32]];
+                visionFactor = MyStrategy.TerranTypes[MyStrategy.Terrains[(int)update.X / 32][(int)update.Y / 32]];
                 VisionRange = visionRange * visionFactor;
             }
             Position = new Vector(update.X, update.Y);
